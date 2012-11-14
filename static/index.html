@@ -93,7 +93,7 @@
     socket.on('User Joined', function (msg) {
         var nick = dec(msg).nick;
         show(nick + " joined.");
-        $("#users").append($("<li>" + nick + "</li>")).listview('refresh');
+        $("#users").append($("<li>" + nick + "</li>"));
     });
 
     // msg: {nick: "user who left"}
@@ -106,7 +106,6 @@
                 el.parentNode.removeChild(el)
             }
         });
-        $("#users").listview('refresh');
     });
 
     // msg: {users: ["nick1", "nick2", "nick3"]}
@@ -115,7 +114,6 @@
         for (var i = 0; i < list.length; ++i) {
            $("#users").append($("<li>" + list[i] + "</li>"));
         }
-        $("#users").listview('refresh');
     });
 
     // msg: {nick: "user who left"}
@@ -188,23 +186,28 @@
         show("Fight started between " + fight.challenger + " and " + fight.defendant);
     });
 
+
     socket.on('Choose Attack', function (msg) {
-        var options = dec(msg).options;
+        console.log('Choose Attack received (%o)', msg);
+        var fight = dec(msg);
+        var options = fight.attackOptions;
         var message = "Choose an attack! \n";
-        for (var i = 0; i < msg.options.length; ++i) {
-            message += "(" + i + ") " + msg.options[i];
+        for (var i = 0; i < options.length; ++i) {
+            message += "(" + i + ") " + options[i] + "\n";
         }
-        var number = prompt(message);
+        var number = prompt(message, 0);
         socket.emit('attack', enc({option: number}));
     });
 
     socket.on('Choose Answer', function (msg) {
-        var options = dec(msg).options;
+        console.log('Choose Answer received (%o)', msg);
+        var decoded = dec(msg);
+        var options = decoded.options;
         var message = "Choose an answer! \n";
-        for (var i = 0; i < msg.options.length; ++i) {
-            message += "(" + i + ") " + msg.options[i];
+        for (var i = 0; i < decoded.options.length; ++i) {
+            message += "(" + i + ") " + decoded.options[i] + "\n";
         }
-        var number = prompt(message);
+        var number = prompt(message, 0);
         socket.emit('respond', enc({option: number}));
     });
 

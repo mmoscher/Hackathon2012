@@ -193,41 +193,42 @@ io.of("/chat").on('connection', function (client) {
 
     // msg: {option: number}
     client.on('attack', function (msg) {
-        var opp = opponent(nick);
-        var attack = attackOptions[dec(msg).option];
         var fight = fightByNick[nick];
+        var attack = fight.attackOptions[dec(msg).option];
         fight.attack = attack;
         fight.answerOptions = pickAnswerOptions(attack);
-        clientsByNick[opp].emit('Choose Answer', {attack: attack, options: fight.answerOptions});
+        var opp = opponent(nick);
+        clientsByNick[opp].emit('Choose Answer', enc({attack: attack, options: fight.answerOptions}));
     });
 
     client.on('respond', function (msg) {
-        // var opp = opponent(nick);
         var fight = fightByNick[nick];
-        var attackNumber = fight.answerOptions[dec(msg).option];
+        var answer = fight.answerOptions[dec(msg).option];
+
         var defended = true;
-        if (challenges.attacks[attackNumber] != fight.attack) {
+        if (answer != challenges.answers[fight.attack]) {
             fight.hitpoints[nick] -= 1;
             defended = false;
         }
         var opp = opponent(nick);
-        clientsByNick[opp].emit('Answer Result', {defended: defended, fight: fight});
-        clientsByNick[nick].emit('Answer Result', {defended: defended, fight: fight});
+        clientsByNick[opp].emit('Answer Result', enc({defended: defended, fight: fight}));
+        clientsByNick[nick].emit('Answer Result', enc({defended: defended, fight: fight}));
 
         if (fight.hitpoints[nick] == 0) {
             winsByNick[opp] += 1;
-            clientsByNick[opp].emit('Fight finished', {fight: fight});
-            clientsByNick[nick].emit('Fight finished', {fight: fight});
+            clientsByNick[opp].emit('Fight finished', enc(fight));
+            clientsByNick[nick].emit('Fight finished', enc(fight));
         }
-
-        fight.turn = nick;
-        startAttack(fight);
+        else {
+            fight.turn = nick;
+            startAttack(fight);
+        }
     });
 
-    var attackOptions;
     function startAttack(fight) {
-        attackOptions = pickRandom(3, challenges.attacks);
-        clientsByNick[fight.turn].emit('Choose Attack', enc({fight: fight, options: options}));
+        fight.attackOptions = pickRandom(3, challenges.attacks);
+        console.log("Asking '" + fight.turn + "' to choose an attack!");
+        clientsByNick[fight.turn].emit('Choose Attack', enc(fight));
     }
 
     function pickAnswerOptions(attack) {
@@ -235,7 +236,7 @@ io.of("/chat").on('connection', function (client) {
         var repick;
         do {
             repick = false;
-            attacks = pick(2, attacks);
+            attacks = pickRandom(2, challenges.attacks);
             for (var i = 0; i < attacks.length; ++i) {
                 if (attacks[i] == attack) {
                     repick = true;
@@ -250,7 +251,7 @@ io.of("/chat").on('connection', function (client) {
 
         var answers = [];
         for (var i = 0; i < attacks.length; ++i) {
-            answers.push(challenges.answers[attacks[i]]);
+            answers.push(challenges.answers[attacks[i]][0]);
         }
 
         console.log("Answer options for attack '" + attack + "':" + answers);
