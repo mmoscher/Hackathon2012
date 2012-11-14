@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>DER CHAT DES TODES</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+    <style>
+        #messages {
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+<div data-role="page">
+
+    <div data-role="header">
+        <h1>DEATH CHAT</h1>
+    </div><!-- /header -->
+
+    <div data-role="content">
+
+        <section id="sectLogin"><form>
+            <label for="nick">Login</label><input type="text" id="nick" />
+            <button id="login">STERP!</button>
+        </form></section>
+
+        <section id="sectMain" style="display: none;" class="ui-grid-a">
+            <form class="ui-block-a">
+                <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
+                <label for="text">Message</label><input type="text" id="text"/>
+                <button id="send">SEND</button>
+            </form>
+            <div class="ui-block-b">
+                <ul id="users" data-role="listview" ></ul>
+            </div>
+        </section>
+
+
+        <p>Hello world</p>
+    </div><!-- /content -->
+
+</div><!-- /page -->
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io.connect('http://' + location.host + '/chat');
+
+    /* GENERAL */
+    function enc(object) { return JSON.stringify(object); }
+    function dec(str) { return JSON.parse(str); }
+
+    function doLog(level, title, msg) {
+        console.log(title + ": " + enc(msg));
+    }
+
+    function log(title, msg) {
+        doLog("DEBUG", title, msg);
+    }
+
+    function err(title, msg) {
+        doLog("ERROR", title, msg);
+    }
+
+    function show(text, user) {
+        if (user != null) text = user + ": " + text;
+        // doLog("DEBUG", "Write", text);
+        var $out = $("#messages");
+        $out.val($out.val() + text + "\n");
+        $out.scrollTop($out[0].scrollHeight);
+    }
+
+    socket.on('Log', function (msg) {
+        log("[SERVER] " + dec(msg).title, enc(dec(msg).payload));
+    });
+
+
+    /* LOGIN / LOGOUT */
+    $("#login").click(function(e) {
+        var nick = $("#nick").val();
+        socket.emit('login', enc({"nick": nick}));
+        e.preventDefault();
+    });
+
+    socket.on('Nick Not Allowed', function (msg) {
+        alert("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
+    });
+
+    socket.on('User Joined', function (msg) {
+        var nick = dec(msg).nick;
+        show(nick + " joined.");
+        $("#users").append($("<li>" + nick + "</li>")).listview('refresh');
+    });
+
+    socket.on('User Left', function (msg) {
+        var nick = dec(msg).nick;
+        show(nick + " left.");
+        var $u = $("#users").find("li");
+        $u.each(function (i, el) {
+            if (el.firstChild.data == nick) {
+                el.parentNode.removeChild(el)
+            }
+        });
+        $("#users").listview('refresh');
+    });
+
+    socket.on('Users', function (msg) {
+        var list = dec(msg).users;
+        for (var i = 0; i < list.length; ++i) {
+           $("#users").append($("<li>" + list[i] + "</li>"));
+        }
+        $("#users").listview('refresh');
+    });
+
+    socket.on('Login', function (msg) {
+        var nick = dec(msg).nick;
+        show("Welcome, " + nick + "!");
+        $("#sectLogin").hide();
+        $("#sectMain").show();
+    });
+
+    /* CHAT */
+    socket.on('Message', function (msg) {
+        show(dec(msg).text, dec(msg).nick);
+    });
+
+    socket.on('Private Message', function (msg) {
+        show(dec(msg).text, dec(msg).from + " (private)");
+    });
+
+    $("#send").click(function(e) {
+        var text = $("#text").val();
+        var to = null;
+        if (text.indexOf("/pm ") == 0) {
+            var parts = text.split(" ", 3);
+            to = parts[1];
+            text = parts[2];
+        }
+
+        // PM?
+        if (to != null) {
+            show(text, "Private to " + to);
+            socket.emit('whisper', enc({text: text, to: to}));
+        }
+        else {
+            show(text, "You");
+            socket.emit('say', enc({text: text}));
+        }
+        e.preventDefault();
+    });
+
+</script>
+
+
+</body>
+</html>
