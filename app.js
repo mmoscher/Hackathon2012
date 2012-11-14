@@ -1,7 +1,8 @@
 var express = require('express'),
     app = express(),
     server = require('http').createServer(app),
-    io = require('socket.io').listen(server);
+    io = require('socket.io').listen(server),
+    challenges = require('./challenges');
 
 server.listen(9001);
 
@@ -21,13 +22,44 @@ io.configure(function(){
 function enc(object) { return JSON.stringify(object) }
 function dec(str)  { return JSON.parse(str) }
 
+var START_HITPOINTS = 10;
 
-var challenges = {
-    "1":  {"FrageA": ["AntwortA1", "AntwortA2"]},
-    "2":  {"FrageB": ["AntwortB1", "AntwortB2"]}
+
+// FIGHT MANAGEMENT
+function startFight(challenger, defendant) {
+    if (fightByNick[challenger] != null) {
+        console.log("User " + challenger + " is already in battle: " + enc(fightByNick[challenger]))
+        return null;
+    }
+    if (fightByNick[defendant] != null) {
+        console.log("User " + defendant + " is already in battle: " + enc(fightByNick[defendant]))
+        return null;
+    }
+
+    var hitpoints = {};
+    hitpoints[challenger] = START_HITPOINTS;
+    hitpoints[defendant] = START_HITPOINTS;
+    var fight = {challenger: challenger,
+                 defendant: defendant,
+                 turn: challenger,
+                 hitpoints: hitpoints};
+    fightByNick[defendant] = fightByNick[challenger] = fight;
+    return fight;
 }
 
+function cleanupFight(nick) {
+    var fight = fightByNick[nick];
+    delete fightByNick[fight.challenger];
+    delete fightByNick[fight.defendant];
+}
+
+function opponent(nick, fight) {
+    return (fight.challenger == nick) ? fight.defendant :fight.challenger;
+}
+
+var winsByNick = {};
 var clientsByNick = {};
+var fightByNick = {};
 
 io.of("/chat").on('connection', function (client) {
     // client.emit('welcome', { hello: 'world' });
@@ -49,6 +81,14 @@ io.of("/chat").on('connection', function (client) {
     // msg: {nick: username}
     client.on('login', function (msg) {
         nick = dec(msg).nick;
+        statusByNick[nick] = {
+            fight: null
+            // {"challenger": "nick1', turn: "nick2", hitpoints: {"nick1": 10, "nick2":10}}
+        };
+
+        if (!winsByNick[nick]) {
+            winsByNick[nick] = 0;
+        }
 
         if (clientsByNick[nick] != null) {
             client.emit('Nick Not Allowed', enc({nick: nick, reason: "Already taken!"}));
@@ -77,6 +117,13 @@ io.of("/chat").on('connection', function (client) {
     client.on('disconnect', function () {
         if (!nick) return;
         delete clientsByNick[nick];
+
+        var fight = fightsByNick[nick];
+        if (fight) {
+            winsByNick[opponent(nick, fight)] += 1;
+            cleanupFight(nick);
+            // TODO: Send notification to winner....
+        }
         client.broadcast.emit('User Left', enc({nick: nick}));
     });
 
@@ -106,7 +153,28 @@ io.of("/chat").on('connection', function (client) {
     // msg: {to: nick}
     client.on('challenge', function (msg) {
         var to = dec(msg).to;
-        clientsByNick[to].emit('Challenge Received', enc({from: nick, text: text}));
+        var fight = startFight(nick, to);
+        if (fight == null) {
+            clientsByNick[from].emit('Fight Cancelled',
+                                     enc({reason: "Opponent already in a fight."}))
+        }
+        else {
+            clientsByNick[to].emit('Incoming Challenge', enc({from: nick}));
+        }
+    });
+
+    client.on('challenge declined', function (msg) {
+        var to = dec(msg).to;
+        cleanupFight(nick);
+        clientsByNick[from].emit(
+            'Fight Cancelled',
+            enc({reason: "Opponent has declined the challenge."}));
+    });
+
+
+    client.on('challenge accepted', function (msg) {
+        var fight = fightByNick[nick];
+        client.broadcast.emit('Fight Started', enc(fight));
     });
 
 });
