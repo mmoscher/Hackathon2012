@@ -38,9 +38,6 @@
                 <ul id="users" data-role="listview" ></ul>
             </div>
         </section>
-
-
-        <p>Hello world</p>
     </div><!-- /content -->
 
 </div><!-- /page -->
@@ -146,7 +143,7 @@
         var to = null;
 
         // Challenge:
-        if (text.indexOf("/challenge ")) {
+        if (text.indexOf("/challenge ") == 0) {
             var parts = text.split(" ", 2);
             to = parts[1];
 
@@ -184,6 +181,31 @@
         else {
             socket.emit('challenge declined', "");
         }
+    });
+
+    socket.on('Fight Started', function (msg) {
+        var fight = dec(msg);
+        show("Fight started between " + fight.challenger + " and " + fight.defendant);
+    });
+
+    socket.on('Choose Attack', function (msg) {
+        var options = dec(msg).options;
+        var message = "Choose an attack! \n";
+        for (var i = 0; i < msg.options.length; ++i) {
+            message += "(" + i + ") " + msg.options[i];
+        }
+        var number = prompt(message);
+        socket.emit('attack', enc({option: number}));
+    });
+
+    socket.on('Choose Answer', function (msg) {
+        var options = dec(msg).options;
+        var message = "Choose an answer! \n";
+        for (var i = 0; i < msg.options.length; ++i) {
+            message += "(" + i + ") " + msg.options[i];
+        }
+        var number = prompt(message);
+        socket.emit('respond', enc({option: number}));
     });
 
 
