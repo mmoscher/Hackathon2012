@@ -2,7 +2,7 @@ var express = require('express'),
     app = express(),
     server = require('http').createServer(app),
     io = require('socket.io').listen(server),
-    challenges = require('challenges');
+    challenges = require('./challenges');
 
 server.listen(9001);
 
@@ -173,7 +173,8 @@ io.of("/chat").on('connection', function (client) {
 
 
     client.on('challenge accepted', function (msg) {
-        
+        var fight = fightByNick[nick];
+        client.broadcast.emit('Fight Started', enc(fight));
     });
 
 });
