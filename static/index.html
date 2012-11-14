@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>DER CHAT DES TODES</title>
+    <title>Piratenkampf TEST CLIENT</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
     <style>
         #messages {
             height: 200px;
@@ -20,14 +18,14 @@
 <div data-role="page">
 
     <div data-role="header">
-        <h1>DEATH CHAT</h1>
+        <h1>Piratenkampf!</h1>
     </div><!-- /header -->
 
     <div data-role="content">
 
         <section id="sectLogin"><form>
             <label for="nick">Login</label><input type="text" id="nick" />
-            <button id="login">STERP!</button>
+            <button id="login">Einloggen!</button>
         </form></section>
 
         <section id="sectMain" style="display: none;" class="ui-grid-a">
@@ -81,23 +79,26 @@
     });
 
 
-    /* LOGIN / LOGOUT */
+    // LOGIN/LOGOUT /////////////////////////////////////////////////////////////////
     $("#login").click(function(e) {
         var nick = $("#nick").val();
         socket.emit('login', enc({"nick": nick}));
         e.preventDefault();
     });
 
+    // msg: {reason: "why nick not allowed"}
     socket.on('Nick Not Allowed', function (msg) {
         alert("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
     });
 
+    // msg: {nick: "the user who joined"}
     socket.on('User Joined', function (msg) {
         var nick = dec(msg).nick;
         show(nick + " joined.");
         $("#users").append($("<li>" + nick + "</li>")).listview('refresh');
     });
 
+    // msg: {nick: "user who left"}
     socket.on('User Left', function (msg) {
         var nick = dec(msg).nick;
         show(nick + " left.");
@@ -110,6 +111,7 @@
         $("#users").listview('refresh');
     });
 
+    // msg: {users: ["nick1", "nick2", "nick3"]}
     socket.on('Users', function (msg) {
         var list = dec(msg).users;
         for (var i = 0; i < list.length; ++i) {
@@ -118,6 +120,7 @@
         $("#users").listview('refresh');
     });
 
+    // msg: {nick: "user who left"}
     socket.on('Login', function (msg) {
         var nick = dec(msg).nick;
         show("Welcome, " + nick + "!");
@@ -125,11 +128,14 @@
         $("#sectMain").show();
     });
 
-    /* CHAT */
+    // CHAT ////////////////////////////////////////////////////////////////////////
+
+    // msg: {from: "the sender", text: "a message"}
     socket.on('Message', function (msg) {
-        show(dec(msg).text, dec(msg).nick);
+        show(dec(msg).text, dec(msg).from);
     });
 
+    // msg: {from: "the sender", text: "a message"}
     socket.on('Private Message', function (msg) {
         show(dec(msg).text, dec(msg).from + " (private)");
     });
@@ -143,7 +149,6 @@
             text = parts[2];
         }
 
-        // PM?
         if (to != null) {
             show(text, "Private to " + to);
             socket.emit('whisper', enc({text: text, to: to}));
@@ -154,6 +159,15 @@
         }
         e.preventDefault();
     });
+
+
+    // FIGHT ////////////////////////////////////////////////////////////////////////
+
+    // receive a challgenge: {to: nick}
+    socket.on('Challenge Received', function (msg) {
+        show(dec(msg).text, dec(msg).from + " (private)");
+    });
+
 
 </script>
 
