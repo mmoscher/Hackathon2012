@@ -11,7 +11,6 @@
   "license": "BSD",
   "dependencies": {
     "socket.io": "~0.9.11",
-    "express": "~3.0.2",
-    "redis": "~0.8.2"
+    "express": "~3.0.2"
   }
 }

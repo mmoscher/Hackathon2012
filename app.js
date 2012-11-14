@@ -1,20 +1,13 @@
 var express = require('express'),
     app = express(),
     server = require('http').createServer(app),
-    redis = require('redis'),
     io = require('socket.io').listen(server);
 
 server.listen(9001);
 
 
 // Initialize Socket.IO
-// http://www.ranu.com.ar/2011/11/redisstore-and-rooms-with-socketio.html
-var port = 6379;
-var pub = redis.createClient(port, "localhost");
-var sub = redis.createClient(port, "localhost");
-var store = redis.createClient(port, "localhost");
-
-io.configure( function(){
+io.configure(function(){
     io.enable('browser client minification');
     io.enable('browser client etag');
     io.enable('browser client gzip');
@@ -22,8 +15,6 @@ io.configure( function(){
     io.set('transports', [
         'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
     ]);
-    var RedisStore = require('socket.io/lib/stores/redis');
-    io.set('store', new RedisStore({redisPub: pub, redisSub: sub, redisClient: store}));
 });
 
 
