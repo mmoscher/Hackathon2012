@@ -30,11 +30,11 @@ var START_HITPOINTS = 2;
 // FIGHT MANAGEMENT
 function startFight(challenger, defendant) {
     if (fightByNick[challenger] != null) {
-        console.log("User " + challenger + " is already in battle: " + enc(fightByNick[challenger]))
+        console.log("User " + challenger + " is already in battle: " + enc(fightByNick[challenger]));
         return null;
     }
     if (fightByNick[defendant] != null) {
-        console.log("User " + defendant + " is already in battle: " + enc(fightByNick[defendant]))
+        console.log("User " + defendant + " is already in battle: " + enc(fightByNick[defendant]));
         return null;
     }
 
@@ -43,7 +43,7 @@ function startFight(challenger, defendant) {
     hitpoints[defendant] = START_HITPOINTS;
     var fight = {challenger: challenger,
                  defendant: defendant,
-                 turn: challenger,
+                 attacker: challenger,
                  hitpoints: hitpoints};
     fightByNick[defendant] = fightByNick[challenger] = fight;
     return fight;
@@ -78,7 +78,7 @@ io.of("/chat").on('connection', function (client) {
     // HELPERS //////////////////////////////////////////////////////////////////////
 
     function clog(title, msg) {
-        console.log("[Client] " + title + " " + enc(msg))
+        console.log("[Client] " + title + " " + enc(msg));
         client.emit('Log', enc({title: title, payload: msg}))
     }
 
@@ -113,14 +113,13 @@ io.of("/chat").on('connection', function (client) {
 
     });
 
-    client.on('get users', function (msg) {
+    client.on('get users', function () {
         var list = [];
         var fighters = [];
         for (var n in clientsByNick) {
             list.push(n);
-            if (fightByNick[n]) {
+            if (fightByNick[n])
                 fighters.push(n);
-            }
         }
         client.emit('Users', enc({users: list, fighters: fighters}));
     });
@@ -169,7 +168,7 @@ io.of("/chat").on('connection', function (client) {
         var to = dec(msg).to;
         var fight = startFight(nick, to);
         if (fight == null) {
-            clientsByNick[nick].emit('Fight Cancelled',
+            clientsByNick[nick].emit('Challenge Declined',
                                      enc({reason: "Opponent already in a fight."}))
         }
         else {
@@ -177,15 +176,14 @@ io.of("/chat").on('connection', function (client) {
         }
     });
 
-    client.on('challenge declined', function (msg) {
-        var to = dec(msg).to;
-        cleanupFight(nick);
-        clientsByNick[from].emit(
-            'Fight Cancelled',
+    client.on('challenge declined', function () {
+        clientsByNick[opponent(nick)].emit(
+            'Challenge Declined',
             enc({reason: "Opponent has declined the challenge."}));
+        cleanupFight(nick);
     });
 
-    client.on('challenge accepted', function (msg) {
+    client.on('challenge accepted', function () {
         var fight = fightByNick[nick];
         client.broadcast.emit('Fight Started', enc(fight));
         startAttack(fight);
@@ -203,32 +201,36 @@ io.of("/chat").on('connection', function (client) {
 
     client.on('respond', function (msg) {
         var fight = fightByNick[nick];
-        var answer = fight.answerOptions[dec(msg).option];
+        fight.answer = fight.answerOptions[dec(msg).option];
 
         var defended = true;
-        if (answer != challenges.answers[fight.attack]) {
+        if (fight.answer != challenges.answers[fight.attack]) {
             fight.hitpoints[nick] -= 1;
             defended = false;
         }
         var opp = opponent(nick);
-        clientsByNick[opp].emit('Answer Result', enc({defended: defended, fight: fight}));
-        clientsByNick[nick].emit('Answer Result', enc({defended: defended, fight: fight}));
+        clientsByNick[opp].emit('Turn Result', enc({defended: defended, fight: fight}));
+        clientsByNick[nick].emit('Turn Result', enc({defended: defended, fight: fight}));
 
         if (fight.hitpoints[nick] == 0) {
             winsByNick[opp] += 1;
-            clientsByNick[opp].emit('Fight finished', enc(fight));
-            clientsByNick[nick].emit('Fight finished', enc(fight));
+            clientsByNick[opp].emit('Fight Result', enc(fight));
+            clientsByNick[nick].emit('Fight Result', enc(fight));
+
+            var msg = enc({fight:fight, winner: opp, winnerWins: winsByNick[opp]});
+            client.broadcast.emit('Fight Ended', msg);
+            client.emit('Fight Ended', msg);
         }
         else {
-            fight.turn = nick;
+            fight.attacker = nick;
             startAttack(fight);
         }
     });
 
     function startAttack(fight) {
         fight.attackOptions = pickRandom(3, challenges.attacks);
-        console.log("Asking '" + fight.turn + "' to choose an attack!");
-        clientsByNick[fight.turn].emit('Choose Attack', enc(fight));
+        // console.log("Asking '" + fight.attacker + "' to choose an attack!");
+        clientsByNick[fight.attacker].emit('Choose Attack', enc(fight));
     }
 
     function pickAnswerOptions(attack) {
@@ -237,17 +239,14 @@ io.of("/chat").on('connection', function (client) {
         do {
             repick = false;
             attacks = pickRandom(2, challenges.attacks);
-            for (var i = 0; i < attacks.length; ++i) {
-                if (attacks[i] == attack) {
+            for (var i = 0; i < attacks.length; ++i)
+                if (attacks[i] == attack)
                     repick = true;
-                }
-            }
         }
         while(repick);
 
         var pos = Math.floor(Math.random()*3);
         attacks.splice(pos, 0, attack);
-
 
         var answers = [];
         for (var i = 0; i < attacks.length; ++i) {
