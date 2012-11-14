@@ -48,6 +48,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+    var challengeOpen = false;
     var socket = io.connect('http://' + location.host + '/chat');
 
     /* GENERAL */
@@ -143,15 +144,27 @@
     $("#send").click(function(e) {
         var text = $("#text").val();
         var to = null;
-        if (text.indexOf("/pm ") == 0) {
+
+        // Challenge:
+        if (text.indexOf("/challenge ")) {
+            var parts = text.split(" ", 2);
+            to = parts[1];
+
+            if (to != null) {
+                show("You challenged ", to);
+                socket.emit('challenge', enc({to: to}));
+            }
+        }
+        // Private Message:
+        else if (text.indexOf("/pm ") == 0) {
             var parts = text.split(" ", 3);
             to = parts[1];
             text = parts[2];
-        }
 
-        if (to != null) {
-            show(text, "Private to " + to);
-            socket.emit('whisper', enc({text: text, to: to}));
+            if (to != null) {
+                show(text, "Private to " + to);
+                socket.emit('whisper', enc({text: text, to: to}));
+            }
         }
         else {
             show(text, "You");
@@ -164,8 +177,13 @@
     // FIGHT ////////////////////////////////////////////////////////////////////////
 
     // receive a challgenge: {to: nick}
-    socket.on('Challenge Received', function (msg) {
-        show(dec(msg).text, dec(msg).from + " (private)");
+    socket.on('Incoming Challenge', function (msg) {
+        if(confirm(dec(msg).from + " has challenged you. Accept?")) {
+            socket.emit('challenge accepted', "");
+        }
+        else {
+            socket.emit('challenge declined', "");
+        }
     });
 
 
