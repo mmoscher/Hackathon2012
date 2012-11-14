@@ -1,20 +1,29 @@
 @import 'boilerplate';
 @import 'grid';
 
-@columns: 12;
-@cloumns-width: 60;
+@columns: 10;
+@columns-width: 33;
 @gutter-width: 20;
+@total-width: 100%;
+@contentWidth:100%;
+
 @userListColor1: #222222;
 @userListColor2: #242424;
 @headerBGColor: #333333;
 @titleColor: #33b5e5;
 
 .content{
-	.column(9)
+	.column(7)
 	}
 #aside {
 	.column(3);
-	background-color:rgba(0, 0, 0, 0.07);
+	background-color:#F2F4F8;
+	div {
+		background-color:rgba(0, 0, 0, 0.07);
+
+		border-left: 1px solid rgba(0, 0, 0, 0.4);
+	    box-shadow: 2px 0 2px -2px #B2B9C9 inset;
+	}
 	li {
 		list-stye: none;
 		display:block;
@@ -35,7 +44,7 @@
 		color: @titleColor;
 	}
 	.title {
-		.column(9);
+		.column(7);
 	}
     .userDiv {
     	.column(3);
@@ -66,11 +75,6 @@
 	}
 }
 
-@media screen and (max-width: 960px) {
-   article {
-      .column(12);
-   }
-   aside {
-      .column(12);
-   }
+@media screen and (max-width: 540px) {
+
 }

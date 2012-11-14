@@ -26,6 +26,7 @@
         function User(nick) {
             this.fights = false;
             this.name = nick;
+
             this.startFight = function() {
                 this.fights = true;
             }
@@ -84,13 +85,44 @@
         });
         $(document).ready(function(){
             socket.emit('get users');
-            $("#aside").css({'height':$(window).height()});
+            $("#userList").css({'height':$(window).height()});
+
             $("#login").click(function(e) {
                 var nick = $("#nick").val();
                 socket.emit('login', enc({"nick": nick}));
                 e.preventDefault();
             });
-        
+            $("#send").click(function(e) {
+                var text = $("#text").val();
+                var to = null;
+
+                // Challenge:
+                if (text.indexOf("/challenge ") == 0) {
+                    var parts = text.split(" ", 2);
+                    to = parts[1];
+
+                    if (to != null) {
+                        show("You challenged ", to);
+                        socket.emit('challenge', enc({to: to}));
+                    }
+                }
+                // Private Message:
+                else if (text.indexOf("/pm ") == 0) {
+                    var parts = text.split(" ", 3);
+                    to = parts[1];
+                    text = parts[2];
+
+                    if (to != null) {
+                        show(text, "Private to " + to);
+                        socket.emit('whisper', enc({text: text, to: to}));
+                    }
+                }
+                else {
+                    show(text, "You");
+                    socket.emit('say', enc({text: text}));
+                }
+                e.preventDefault();
+            });
 
         });
 
@@ -111,40 +143,41 @@
         socket.on('User Left', function (msg) {
             var nick = dec(msg).nick;
             delete users[nick];
-            $("#user-" + nick).delete();
+            $("#user-" + nick).remove();
         });
 
         socket.on('Fight Started', function(msg){
             var fighter = dev(msg).fight;
             if(typeof users[fighter.challenger] != 'undefined'){
                 users[fighter.challenger].startFight;
+                $("#user-" + fighter.challenger).addClass("inFight");
             }
             if(typeof users[fighter.defendant] != 'undefined'){
                 users[fighter.defendant].startFight;
+                $("#user-" + fighter.defendant).addClass("inFight");
             }
         });
         socket.on('Fight Finished', function(msg){
             var fighter = dev(msg).fight;
             if(typeof users[fighter.challenger] != 'undefined'){
                 users[fighter.challenger].finishedFight;
+                $("#user-" + fighter.challenger).removeClass("inFight");
             }
             if(typeof users[fighter.defendant] != 'undefined'){
                 users[fighter.defendant].finishedFight;
+                $("#user-" + fighter.defendant).removeClass("inFight");
             }
         });
 
         socket.on('Users', function (msg) {
             var list = dec(msg).users;
-            console.log(dec(msg));
             var fighters = dec(msg).fighters;
             for (var i = 0; i < list.length; ++i) {
                 users[list[i]] = new User(list[i]);
-                console.log(users);
                 if ($.inArray(list[i], fighters)) users[list[i]].startFight();
             };
             $.each(users, function(key, val){
-                console.log(typeof e);
-                if(typeof e != "undefined") $("#users").append($("<li id='user-"+val.name+"'>" + val.name + "</li>"));
+                 $("#users").append($("<li id='user-"+val.name+"'>" + val.name + "</li>"));
             });
         });
 
@@ -189,8 +222,10 @@
             </section>
         </div>
         <div id="aside">
+            <div id="userList">
                 <ul id="users" ></ul>
             </div>
+        </div>
     </div><!-- /content -->
 
 </div><!-- /page -->
