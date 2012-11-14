@@ -5,14 +5,34 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <link rel="stylesheets/less" type="text/css" href="game.less">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/1.3.1/less.min.js " type="text/javascript"></script>
+    <link rel="stylesheet/less" type="text/css" href="stylesheets/game.less">
+    <script src="/less.min.js " type="text/javascript"></script>
 </head>
 
 <body>
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
         var socket = io.connect('http://' + location.host + '/chat');
+
+        var users = {};
+
+
+        /**
+         User Model
+         Repsresents a User
+         @param string nick: nickname
+         */
+        function User(nick) {
+            this.fights = false;
+            this.name = nick;
+            this.startFight = function() {
+                this.fights = true;
+            }
+            this.finishedFight = function() {
+                this.fights = false;
+            }
+        }
+
         /* GENERAL */
         function enc(object) { return JSON.stringify(object); }
         function dec(str) { return JSON.parse(str); }
@@ -46,14 +66,15 @@
             var buttons = [];
             $(buttons).each(function(i, e){
                 var button = $("<button>").addClass(e.name).text(e.title); 
-                buttons[] = button;
+                buttons.push = button;
                 button.onClick(e.do);
 
             });
             var dialog = $("<div>").addClass("modal").
             append($("<h2>").text(title)).
             append($("<p>").text(text)).
-            append($("<p>").append())
+            append($("<p>").append(buttons));
+
 
         }
 
@@ -75,50 +96,62 @@
         /*
             Sockets
         */        
-        socket.on('Users', function (msg) {
-            var list = dec(msg).users;
-            for (var i = 0; i < list.length; ++i) {
-               $("#users").append($("<li>" + list[i] + "</li>"));
-            }
-            $("#users").listview('refresh');
-        });
         socket.on('Nick Not Allowed', function (msg) {
             dialog("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
         });
 
         socket.on('User Joined', function (msg) {
             var nick = dec(msg).nick;
-            show(nick + " joined.");
-            $("#users").append($("<li>" + nick + "</li>")).listview('refresh');
+            users[nick] = new User(nick);
+
+            $("#users").append($("<li id='user-"+nick+"'>" + nick + "</li>"));
         });
 
         socket.on('User Left', function (msg) {
             var nick = dec(msg).nick;
-            show(nick + " left.");
-            var $u = $("#users").find("li");
-            $u.each(function (i, el) {
-                if (el.firstChild.data == nick) {
-                    el.parentNode.removeChild(el)
-                }
-            });
-            $("#users").listview('refresh');
+            delete users[nick];
+            $("#user-" + nick).delete();
+        });
+
+        socket.on('Fight Started', function(msg){
+            var fighter = dev(msg).fight;
+            if(typeof users[fighter.challenger] != 'undefined'){
+                users[fighter.challenger].startFight;
+            }
+            if(typeof users[fighter.defendant] != 'undefined'){
+                users[fighter.defendant].startFight;
+            }
+        });
+        socket.on('Fight Finished', function(msg){
+            var fighter = dev(msg).fight;
+            if(typeof users[fighter.challenger] != 'undefined'){
+                users[fighter.challenger].finishedFight;
+            }
+            if(typeof users[fighter.defendant] != 'undefined'){
+                users[fighter.defendant].finishedFight;
+            }
         });
 
         socket.on('Users', function (msg) {
             var list = dec(msg).users;
+            var fighters = dec(msg).fighters;
             for (var i = 0; i < list.length; ++i) {
-               $("#users").append($("<li>" + list[i] + "</li>"));
-            }
-            $("#users").listview('refresh');
+                users[list[i]] = new User(list[i]);
+                if ($.inArray(list[i], fighters)) users[list[i]].startFight();
+            };
+            $(users).each(function(i, e){
+                $("#users").append($("<li id='user-"+e.name+"'>" + e.name + "</li>"));
+            });
         });
 
         socket.on('Login', function (msg) {
             var nick = dec(msg).nick;
             show("Welcome, " + nick + "!");
             $("#sectLogin").hide();
-            $("#sectMain").show();
+            $("#sectLobby").show();
         });
 
+        
     </script>
 <div data-role="page">
 
@@ -127,25 +160,26 @@
     </div><!-- /header -->
 
     <div data-role="content">
+        <div class="content">
+            <section id="sectLogin">
+            
+                <form>
+                    <label for="nick">Nickname</label><input type="text" id="nick" />
+                    <button id="login">Go to Lobby!</button>
+                </form>            
+            </section>
 
-        <section id="sectLogin"><form>
-            <label for="nick">Login</label><input type="text" id="nick" />
-            <button id="login">STERP!</button>
-        </form></section>
-
-        <section id="sectMain" style="display: none;" class="ui-grid-a">
-            <form class="ui-block-a">
-                <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
-                <label for="text">Message</label><input type="text" id="text"/>
-                <button id="send">SEND</button>
-            </form>
-            <div class="ui-block-b">
-                <ul id="users" data-role="listview" ></ul>
+            <section id="sectLobby" style="display: none;" class="ui-grid-a">
+                <form class="ui-block-a">
+                    <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
+                    <label for="text">Message</label><input type="text" id="text"/>
+                    <button id="send">SEND</button>
+                </form>
+            </section>
+        </div>
+        <div class="aside">
+                <ul id="users" ></ul>
             </div>
-        </section>
-
-
-        <p>Hello world</p>
     </div><!-- /content -->
 
 </div><!-- /page -->
