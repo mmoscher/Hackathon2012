@@ -1,12 +1,69 @@
 @import 'boilerplate';
 @import 'grid';
 
+@columns: 12;
+@cloumns-width: 60;
+@gutter-width: 20;
+@userListColor1: #222222;
+@userListColor2: #242424;
+@headerBGColor: #333333;
+@titleColor: #33b5e5;
 
 .content{
-	.column(12)
+	.column(9)
 	}
-.aside {
-	.column(12)
+#aside {
+	.column(3);
+	background-color:rgba(0, 0, 0, 0.07);
+	li {
+		list-stye: none;
+		display:block;
+		height:25px;
+		border-bottom-color:#D8DFEA;
+		padding:2px 3px
+	}
+}
+#header {
+	height:30px;
+	background-color:@headerBGColor;
+
+	
+	h1 {
+		line-height:1.25em;
+		margin:0 2em;
+		font-size:1.2em;
+		color: @titleColor;
+	}
+	.title {
+		.column(9);
+	}
+    .userDiv {
+    	.column(3);
+		height:30px;
+		color:#fff;
+		right:0;
+		top:0;
+		text-align:left;
+		color:#999;
+		font-size:11px;
+		line-height:1.25em;
+		white-space:nowrap;
+
+		.user{
+ 			padding:2px 15px 8px 0;
+ 			img{
+		 	 	width:25px;
+		 	 	height:25px;
+		 	 	padding-right:10px;
+		 	 }
+ 			a{
+		 		color:@titleColor;
+		 		font-size:1.5em;
+		 		line-height:1.25em;
+		 	}	
+ 		}
+
+	}
 }
 
 @media screen and (max-width: 960px) {
