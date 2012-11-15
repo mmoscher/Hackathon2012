@@ -16,9 +16,44 @@ body{
 	font-family: 'VT323', cursive;
 	background-color:black;
 }
+label {
+  display: block;
+  margin-bottom: 5px;
+}
 .content{
-	.column(7)
+	.column(7);
+
+	#sectLogin {
+		form {
+			position:relative;
+			left:50%;
+			margin-left:-20px;
+			width:345px;
+			input:after{
+				content:"<br />";
+			}
+		}
+		label {
+			color:@titleColor;
+			font-size:1.4em;
+		}
 	}
+	#sectLobby {
+		form {
+			position:relative;
+			left:50%;
+			margin-left:-20px;
+			width:345px;
+			input:after{
+				content:"<br />";
+			}
+		}
+		label {
+			color:@titleColor;
+			font-size:1.4em;
+		}
+	}
+}
 #aside {
 	.column(3);
 	background-color:@asideColor;
@@ -36,7 +71,9 @@ body{
 		font-size:1.5em;
 		border-bottom-color:#D8DFEA;
 		border-bottom:1px solid;
-		padding:10px 10px 0px 10px;
+		span {
+			margin:10px 10px 0px 10px;
+		}
 
 		.inFight {
 			background:url('../images/notActive.gif');
@@ -78,11 +115,13 @@ body{
 		 	 	width:25px;
 		 	 	height:25px;
 		 	 	padding-right:10px;
+		 	 	float:left;
 		 	 }
  			a{
 		 		color:@titleColor;
-		 		font-size:1.5em;
-		 		line-height:1.25em;
+		 		font-size:25px;
+		 		line-height:25px;
+		 		margin-top:0;
 		 	}	
  		}
 
@@ -105,12 +144,88 @@ body{
   }
  
   .modal h2 {
-    background:url(/media/img/global/info.png) 0 50% no-repeat;
+    
     margin:0px;
     padding:10px 0 10px 45px;
     border-bottom:1px solid #333;
     font-size:20px;
   }
+   #arena {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            font-family: 'VT323', cursive;
+            font-size: 2em;
+        }
+
+        #challenge {
+            min-height: 8%;
+            background: black;
+            color: white;
+            margin: 0;
+            padding: 10px;
+            font-size: 1em;
+            text-shadow: -1px 0 black, 0 1px black,
+            1px 0 black, 0 -1px black;
+            .opponent {
+	            color: #bc8f8f;
+	        }
+        }
+
+        
+
+        #picture {
+            height: 60%;
+            top: 10%;
+            background: url('../images/arena_bg.gif');
+            background-position: 20%;
+            background-size: 100%;
+            margin: 0;
+
+            .status {
+	            position: absolute;
+	            width: 30%;
+	            height: 1.2em;
+	            padding: 0.5em;
+	            color: #bc8f8f;
+	            bottom: 30%;
+	            text-shadow: -1px 0 black, 0 1px black,
+	            1px 0 black, 0 -1px black;
+	        }
+	        #challengerStatus {
+	            text-align: left;
+	            left: 0;
+	        }
+
+	        #defendantStatus {
+	            text-align: right;
+	            right: 0;
+	        }
+        }
+
+        #options {
+            position: absolute;
+            bottom: 0;
+            height: 30%;
+            width: 100%;
+            margin: 0;
+            color: #c0c0c0;
+            background: black;
+            font-size: 1em;
+
+
+	        li {
+	            margin: 15px;
+		        &:hover,
+		        &:active {
+		            cursor: pointer;
+		            color: #ffeeee;
+		        }
+	        }
+
+        
+        }
+
 
 @media screen and (max-width: 540px) {
 

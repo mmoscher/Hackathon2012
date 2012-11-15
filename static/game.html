@@ -63,6 +63,7 @@
         }
     
         function userNameClick(e){
+                        console.log(e);
                         dialog(e.target, $(e.target).data("name"),
                             "Was willst du tun?",
                             [{
@@ -110,7 +111,7 @@
 
             $("body").append(dialog);
             $(ctx).overlay({target:dialog,load: true})
-
+            return ctx;
 
         }
         function hideURLbar() {
@@ -159,7 +160,7 @@
             var nick = dec(msg).nick;
             users[nick] = new User(nick);
 
-            $("#users").append($("<li id='user-"+nick.replace(/ /g,"_")+"' data-name='"+nick+"''><span>" + nick + "/span></li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)}));
+            $("#users").append($("<li id='user-"+nick.replace(/ /g,"_")+"' data-name='"+nick+"''><span>" + nick + "</span></li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)}));
         });
 
         socket.on('User Left', function (msg) {
@@ -233,8 +234,9 @@
         });
         socket.on('Challenge Declined', function (msg) {
             show("Challenge declined: " + dec(msg).reason);
-            dialog($("#sectLobby"), "Challenge declined!",
+            var ctx = dialog($("#sectLobby"), "Challenge declined!",
                             "Reason: " + dec(msg).reason);
+            setTimeout(function() {$(ctx).data("overlay").close();}, 1000);
         });
         //fight
         socket.on('Init Fight', function (msg) {
@@ -367,16 +369,16 @@
             <section id="sectLogin">
             
                 <form>
-                    <label for="nick">Nickname</label><input type="text" id="nick" />
-                    <button id="login">Go to Lobby!</button>
+                    <label for="nick">Wie ist dein Name Landratte?</label><input type="text" id="nick" /><br />
+                    <button id="login">EnteRRR!</button>
                 </form>            
             </section>
 
             <section id="sectLobby" style="display: none;" class="ui-grid-a">
-                <form class="ui-block-a">
+                <form>
                     <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
-                    <label for="text">Message</label><input type="text" id="text"/>
-                    <button id="send">SEND</button>
+                    <label for="text">Deine Nachricht Matrose</label><input type="text" id="text"/><br />
+                    <button id="send">Shout! Like a pirate</button>
                 </form>
             </section>
         </div>
@@ -386,7 +388,7 @@
             </div>
         </div>
     </div><!-- /content -->
-    <div data-role="content" id="arena">
+    <div data-role="content" id="arena" style="display:none;">
         <div id="challenge">
             <span class="opponent"></span>
             <span class="message"></span>
