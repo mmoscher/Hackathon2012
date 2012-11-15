@@ -210,7 +210,7 @@ socket.on('Users', function (msg) {
     var fighters = dec(msg).fighters;
     for (var i = 0; i < list.length; ++i) {
         users[list[i]] = new User(list[i]);
-        if (fighters.indexOf(list[i] != -1)){
+        if (fighters.indexOf(list[i]) != -1){
             users[list[i]].startFight();
         }
     };
