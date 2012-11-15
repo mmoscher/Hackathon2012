@@ -36,8 +36,6 @@ function init_scene() {
 
     
     
-    
-
     //link player model
     this.playerLeft.model = createPlayerModel( null , 'left' );  
     this.playerLeft.scene = new THREE.Scene();
@@ -153,7 +151,13 @@ function createPlayerModel( _palyerID, _playerSide ) {
     playerMeshUp.geometry.__dirtyNormals = true;
     */
     var player = new Player();
-    return playerMeshUp;
+    if(_playerSide == 'right') {
+      player.createPlayer(100);
+    }else if(_playerSide == 'left') {
+      player.createPlayer(-100);
+    }
+    
+    return player.getMesh() ;
 }
 
 /*

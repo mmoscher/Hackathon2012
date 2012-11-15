@@ -1,11 +1,32 @@
 <html>
   <head>
-    <script type="text/javascript" src="_lib/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="_lib/jquery.js"></script>
     <script type="text/javascript" src="_lib/three.js"></script>
+    <script type="text/javascript" src="_lib/Tween.js"></script>
     <script type="text/javascript" src="_lib/render_functions.js"></script>
+    <script type="text/javascript" src="_lib/game_functions.js"></script>
+    <script type="text/javascript" src="_lib/require.js"></script>
+    
+    <script type="text/javascript">
+	    
+      $(document).ready( function() {
+	  //first of all init the scene
+	  init_scene();
+	  //init the game
+	 //init_game();
+      });
+    </script>
   </head>
   <body>
-
+    <div id="table" style="position: absolute; width: 100%; height:100%; z-index: 0;"></div>
+    <div id="playerRight" style="position: absolute; width: 100%; height:100%; z-index: 10;"></div>
+    <div id="playerLeft" style="position: absolute; width: 100%; height:100%; z-index: 20;"></div>
+    <div id="controlLayer" style="position: absolute; width: 100%; height:100%; z-index: 30;" >
+       <a href="javascript: void(0);" onClick="jumpPlayer('right');"> Bump right </a> <br/>
+        <a href="javascript: void(0);" onClick="jumpPlayer('left');"> Bump left </a> <br/>
+        <a href="javascript: void(0);" onClick="movePlayers(0.4);"> run left </a> <br/>
+           <a href="javascript: void(0);" onClick="movePlayers(0.6);"> run right </a> 
+    </div>
   
   </body>
 </html>
