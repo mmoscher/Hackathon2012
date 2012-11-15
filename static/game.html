@@ -61,16 +61,14 @@
             $out.val($out.val() + text + "\n");
             $out.scrollTop($out[0].scrollHeight);
         }
-        function challenge(e){
-            if(me != null)
-                socket.emit('challenge', enc({to: $(e.target).data('name')}));
-        }
+    
         function userNameClick(e){
                         dialog(e.target, $(e.target).data("name"),
                             "Was willst du tun?",
                             [
                             {name:"challenge", title:"Herausfordern", do:function(e){
-                                console.log("challenge");
+                               if(me != null)
+                                    socket.emit('challenge', enc({to: $(this).data('name')}));
                                 }
                             },{name:"pm",title:"Private Nachricht", do:function(e){
                                 console.log(e);
@@ -90,11 +88,15 @@
                 var button = $("<button>").addClass(e.name).text(e.title); 
                 buttons.push(button);
                 button.click(function(){
-                    if(e.do != undefined && typeof e.do == 'function') e.do(ctx);
+                    if(e.do != undefined && typeof e.do == 'function') {
+                        e.do.call(ctx);
+                        var api = $(ctx).data("overlay");
+                        api.close();
+                    }
                 });
 
             });
-            console.log(buttons);
+            
             var dialog = $("<div>").addClass("modal").
             append($("<h2>").text(title)).
             append($("<p>").text(text)).
@@ -173,7 +175,7 @@
             var nick = dec(msg).nick;
             users[nick] = new User(nick);
 
-            $("#users").append($("<li id='user-"+nick+"'>" + nick + "</li>"));
+            $("#users").append($("<li id='user-"+nick+"' data-name='"+nick+"''>" + nick + "</li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)}));
         });
 
         socket.on('User Left', function (msg) {
@@ -214,7 +216,7 @@
             };
             $.each(users, function(key, val){
                  $("#users").append(
-                    $("<li id='user-"+val.name+"' data-name="+val.name+">" + val.name + "</li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)})
+                    $("<li id='user-"+val.name+"' data-name='"+val.name+"''>" + val.name + "</li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)})
                 );
             });
 
@@ -229,6 +231,21 @@
 
             $("#sectLogin").hide();
             $("#sectLobby").show();
+        });
+
+        socket.on('Incoming Challenge', function (msg) {
+
+            dialog($("#sectLobby"), dec(msg).from + "has challenged you!",
+                            "Willst du gegen ihn antreten?",
+                            [
+                            {name:"accept", title:"Ja", do:function(e){
+                                socket.emit('challenge accepted', "");
+                                }
+                            },{name:"decline",title:"Nein", do:function(e){
+                                socket.emit('challenge declined', "");
+                                }
+                            }]
+                            );
         });
 
         
