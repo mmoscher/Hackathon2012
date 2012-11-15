@@ -1,0 +1,389 @@
+@import url(http://fonts.googleapis.com/css?family=VT323);
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+tt,
+var,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  vertical-align: baseline;
+  background: transparent;
+  font-weight: inherit;
+  font-style: inherit;
+  font-size: 100%;
+  font-family: inherit;
+}
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+html {
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+}
+body {
+  position: relative;
+}
+.wrapOut {
+  width: 100%;
+  float: left;
+  clear: both;
+  min-width: 100%;
+}
+.wrapIn {
+  width: 100%;
+  margin: 0 auto;
+}
+.outer {
+  float: left;
+  clear: both;
+  position: relative;
+  left: 50%;
+}
+.inner {
+  position: relative;
+  left: -50%;
+}
+html {
+  margin: 0;
+  padding: 0;
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: helvetica, arial, verdana, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+.floatClear {
+  float: left;
+  clear: both;
+}
+img {
+  border: 0;
+}
+ul {
+  list-style-type: none;
+}
+.clearfix {
+  zoom: 1;
+}
+.clearfix:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+body {
+  width: 100%;
+  zoom: 1;
+  *zoom: 1;
+}
+body:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+body:before,
+body:after {
+  content: "";
+  display: table;
+}
+body:after {
+  clear: both;
+}
+body {
+  font-family: 'VT323', cursive;
+  background-color: black;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+.content {
+  display: inline;
+  float: left;
+  width: 67.5%;
+  margin: 0 1.25%;
+}
+.content #sectLogin form {
+  position: relative;
+  left: 50%;
+  margin-left: -20px;
+  width: 345px;
+}
+.content #sectLogin form input:after {
+  content: "<br />";
+}
+.content #sectLogin label {
+  color: #33b5e5;
+  font-size: 1.4em;
+}
+.content #sectLobby form {
+  position: relative;
+  left: 50%;
+  margin-left: -20px;
+  width: 345px;
+}
+.content #sectLobby form input:after {
+  content: "<br />";
+}
+.content #sectLobby label {
+  color: #33b5e5;
+  font-size: 1.4em;
+}
+#aside {
+  display: inline;
+  float: left;
+  width: 27.500000000000004%;
+  margin: 0 1.25%;
+  background-color: #f2f4f8;
+}
+#aside div {
+  background-color: rgba(0, 0, 0, 0.07);
+  border-left: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 2px 0 2px -2px #b2b9c9 inset;
+}
+#aside li {
+  list-stye: none;
+  display: block;
+  height: 40px;
+  width: 100%;
+  font-size: 1.5em;
+  border-bottom-color: #D8DFEA;
+  border-bottom: 1px solid;
+}
+#aside li span {
+  margin: 10px 10px 0px 10px;
+}
+#aside li.inFight {
+  background: url('http://localhost:9001/stylesheets/../images/notActive.gif');
+}
+#aside li:hover {
+  background: #ffffff;
+}
+#header {
+  height: 30px;
+  background-color: #333333;
+}
+#header h1 {
+  line-height: 1.25em;
+  margin: 0 2em;
+  font-size: 1.2em;
+  color: #33b5e5;
+}
+#header .title {
+  display: inline;
+  float: left;
+  width: 67.5%;
+  margin: 0 1.25%;
+}
+#header .userDiv {
+  display: inline;
+  float: left;
+  width: 27.500000000000004%;
+  margin: 0 1.25%;
+  height: 30px;
+  color: #fff;
+  right: 0;
+  top: 0;
+  text-align: left;
+  color: #999;
+  font-size: 11px;
+  line-height: 1.25em;
+  white-space: nowrap;
+}
+#header .userDiv .user {
+  padding: 2px 15px 8px 0;
+}
+#header .userDiv .user img {
+  width: 25px;
+  height: 25px;
+  padding-right: 10px;
+  float: left;
+}
+#header .userDiv .user a {
+  color: #33b5e5;
+  font-size: 25px;
+  line-height: 25px;
+  margin-top: 0;
+}
+.modal {
+  background-color: #fff;
+  display: none;
+  width: 350px;
+  padding: 15px;
+  text-align: left;
+  border: 2px solid #333;
+  opacity: 0.8;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-box-shadow: 0 0 50px #ccc;
+  -webkit-box-shadow: 0 0 50px #ccc;
+}
+.modal h2 {
+  margin: 0px;
+  padding: 10px 0 10px 45px;
+  border-bottom: 1px solid #333;
+  font-size: 20px;
+}
+#arena {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  font-family: 'VT323', cursive;
+  font-size: 2em;
+}
+#challenge {
+  min-height: 8%;
+  background: black;
+  color: white;
+  margin: 0;
+  padding: 10px;
+  font-size: 1em;
+  text-shadow: -1px 0 #000000, 0 1px #000000, 1px 0 #000000, 0 -1px #000000;
+}
+#challenge .opponent {
+  color: #bc8f8f;
+}
+#picture {
+  height: 60%;
+  top: 10%;
+  background: url('http://localhost:9001/stylesheets/../images/arena_bg.jpg');
+  background-position: 20%;
+  background-size: 100%;
+  margin: 0;
+}
+#picture .status {
+  position: absolute;
+  width: 30%;
+  height: 1.2em;
+  padding: 0.5em;
+  color: #bc8f8f;
+  bottom: 30%;
+  text-shadow: -1px 0 #000000, 0 1px #000000, 1px 0 #000000, 0 -1px #000000;
+}
+#picture #challengerStatus {
+  text-align: left;
+  left: 0;
+}
+#picture #defendantStatus {
+  text-align: right;
+  right: 0;
+}
+#flashInfo {
+  position: absolute;
+  top: 120px;
+  left: 45%;
+  font-size: 3em;
+  color: #b22222;
+  font-weight: bold;
+}
+#options {
+  position: absolute;
+  bottom: 0;
+  height: 30%;
+  width: 100%;
+  margin: 0;
+  color: #c0c0c0;
+  background: black;
+  font-size: 1em;
+}
+#options li {
+  margin: 15px;
+  margin-left: 30px;
+  list-style-type: disc;
+}
+#options li:hover,
+#options li:active {
+  cursor: pointer;
+  color: #ffeeee;
+}
+@media screen and (max-width: 540px) {
+  
+}
