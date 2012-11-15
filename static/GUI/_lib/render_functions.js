@@ -51,7 +51,7 @@ function de2ra (degree) { return degree*(Math.PI/180); }
 
 function init_scene() {
 
-    var width = Math.round($("#picture").width() * 1.4);
+    var width = $("#picture").width();
     var height = Math.round($("#picture").height() * 1.4);
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000 );
     camera.position.z = 300;

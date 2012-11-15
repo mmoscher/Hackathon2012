@@ -68,7 +68,6 @@ function show(text, user) {
 }
 
 function userNameClick(e){
-    console.log(e);
     dialog(e.target, $(e.target).data("name"),
             "Was willst du tun?",
             [{
@@ -346,18 +345,26 @@ socket.on('Turn Result', function (msg) {
         hideOptions(opponent(fight, nick), fight.answer);
     }
 
+    var sum = 0;
+    sum += fight.hitpoints[fight.challenger];
+    sum += fight.hitpoints[fight.defendant];
+
+    var ratio = fight.hitpoints[fight.challenger] / sum;
+    console.log("Ratio: %o", ratio);
+    movePlayers(ratio);
+
     // flashMessage(defended ? "Pariert!" : "AUTSCH!!!")
 });
 
 socket.on('Fight Result', function (msg) {
-    closeArena();
     var fight = dec(msg);
-    if (fight.hitpoints[me] == 0) {
-        show("\nYou lost!");
+    if (fight.hitpoints[fight.challenger] == 0) {
+        movePlayers(0);
     }
     else {
-        show("\nYou won!");
+        movePlayers(1);
     }
+    setTimeout(closeArena, 900);
 });
 
 
