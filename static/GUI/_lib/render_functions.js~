@@ -9,10 +9,10 @@ var scenePlayerLeft;
 var scenePlayerRight;
 
 //global vars
-var playerRadius = 15;
+var playerHeight= 25;
 var tableHeight = 10;
 var tableLegLength = 60;
-var tableWidth = 300;
+var tableWidth = 340;
 
 var bumpingHeight = 10;
 
@@ -20,12 +20,13 @@ var jumpingHeight = 20;
 var jumpingDuration = 500;
 
 var runnigDuration = 2000;
+var loosingDuration = 5000;
 
 var currentJumpingPlayerType = "";
 
 var playerDistance = 20;
 
-this.de2ra = function(degree)   { return degree*(Math.PI/180); }
+function de2ra (degree) { return degree*(Math.PI/180); }
 
 function init_scene() {
 
@@ -100,7 +101,7 @@ function createTable() {
   var table = new THREE.CubeGeometry( tableWidth, tableHeight, 50 );
   var tableMeshUp = new THREE.Mesh( table , sphereMaterial );
    
-  tableMeshUp.position.y = -( playerRadius + ( playerRadius - tableHeight ) );
+  tableMeshUp.position.y = -( (playerHeight) + tableHeight );
   tableMeshUp.position.z = -30;
   
   return tableMeshUp;
@@ -115,17 +116,17 @@ function createTableLeg( type ) {
   var tableLeg = new THREE.CubeGeometry( tableLegLength, (tableHeight/2) , 50 );
   var tableLegMeshUp = new THREE.Mesh( tableLeg , sphereMaterial );
    
-  tableLegMeshUp.position.y = -( tableHeight + (tableLegLength/2) );
+  tableLegMeshUp.position.y = -( (playerHeight) + tableHeight + (tableLegLength/2) -5 );
   if( type == 'left' ) {
     tableLegMeshUp.position.z = -30;
     tableLegMeshUp.position.x = -( tableWidth/2 );
     
-    tableLegMeshUp.rotation.z = this.de2ra(45);
+    tableLegMeshUp.rotation.z = de2ra(45);
   }else if( type =='right' ) {
     tableLegMeshUp.position.z = -30;
     tableLegMeshUp.position.x = ( tableWidth/2 );
     
-    tableLegMeshUp.rotation.z = this.de2ra(-45);
+    tableLegMeshUp.rotation.z = de2ra(-45);
   }
   
   return tableLegMeshUp;
@@ -133,14 +134,24 @@ function createTableLeg( type ) {
 
 function createPlayerModel( _palyerID, _playerSide ) {
   
-    var radius = playerRadius;
-    var segments = 70;
-    var rings = 70;
+    var imgSource = "";
+    if(_playerSide == 'left') {
+      imgSource = "_img/LeftWin.png";
+    }else{
+      imgSource = "_img/RightWin.png";
+    }
   
     
-    var sphereMaterial = new THREE.MeshLambertMaterial( { color: 0xFF0000 } );
-    var playerModel = new THREE.SphereGeometry( radius, segments, rings);
-    var playerMeshUp = new THREE.Mesh( playerModel , sphereMaterial );
+    //var sphereMaterial = new THREE.MeshLambertMaterial( { color: 0xFF0000 } );
+    
+    var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
+        map:THREE.ImageUtils.loadTexture(imgSource)
+    });
+    img.map.needsUpdate = true; //ADDED
+    
+    //var playerModel = new THREE.SphereGeometry( radius, segments, rings);
+    playerModel = new THREE.PlaneGeometry(2*playerHeight, 2*playerHeight);
+    var playerMeshUp = new THREE.Mesh( playerModel , img );
     
    //playerMeshUp.position.y = 100;
     //playerMeshUp.position.z = 100;
@@ -212,18 +223,80 @@ function jumpPlayer( playerType ) {
   animate( );
 }
 
+function loosingPlayerModel( _playerSide ) {
+  
+  
+    var imgSource = "";
+    if(_playerSide == 'left') {
+      imgSource = "_img/LeftLose.png";
+    }else{
+      imgSource = "_img/RightLose.png";
+    }
+    
+    var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
+        map:THREE.ImageUtils.loadTexture(imgSource)
+    });
+    img.map.needsUpdate = true; //ADDED
+    
+    Players[_playerSide].model.material = img;
+  
+}
+
+function winnigPlayerModel( _playerSide ) {
+  
+  
+    var imgSource = "";
+    if(_playerSide == 'left') {
+      imgSource = "_img/LeftWin.png";
+    }else{
+      imgSource = "_img/RightWin.png";
+    }
+    
+    var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
+        map:THREE.ImageUtils.loadTexture(imgSource)
+    });
+    img.map.needsUpdate = true; //ADDED
+    
+    Players[_playerSide].model.material = img;
+  
+}
+
 function movePlayers( destinationQuotient ) {
   //destinationQuotient 0.01 <-> 0.99
   //destination 1.0 -> player right win
   //destination 0.0 -> player left win
-  var xTarget = destinationQuotient * (tableWidth - 2*playerDistance);
-  //relativieren mittelpunkt ist x = 0;
-  if( xTarget >= 200 ) {
-      xTarget = xTarget - 200;
-      jumpPlayer('left');
+  
+  if( parseFloat(destinationQuotient) == 1.0 ) {
+      return beginKickPlayer('right');
+  }else if( destinationQuotient == 0 ) {
+      return beginKickPlayer('left');
+  }
+  
+  //creat new meshs
+  if( destinationQuotient < 0.5 ) {
+      winnigPlayerModel('right');
+      loosingPlayerModel('left');
+  }else if( destinationQuotient > 0.5  ) {
+      loosingPlayerModel('right');
+      winnigPlayerModel('left');
   }else{
-      xTarget = (-1)*(200 - xTarget);
+      //gleichstand
+      winnigPlayerModel('right');
+      winnigPlayerModel('left');
+  }
+  
+  
+  var runnigSpace = tableWidth - 2*playerDistance;
+  var xTarget = destinationQuotient * ( runnigSpace );
+  //relativieren mittelpunkt ist x = 0;
+  if( xTarget > ( runnigSpace / 2 ) ) {
+      xTarget = xTarget - (runnigSpace/2);
+      jumpPlayer('left');
+  }else if( xTarget < (runnigSpace / 2 ) ){
+      xTarget = (-1)*((runnigSpace/2) - xTarget);
       jumpPlayer('right');
+  }else{
+      xTarget = 0;
   }
     
   var xTargetLeftPlayer = xTarget - playerDistance;
@@ -250,6 +323,49 @@ function movePlayers( destinationQuotient ) {
 			    
   tweenHead.start();
   animateBoth( );
+}
+
+function beginKickPlayer( playerType ) {
+ 
+  if( playerType == 'right' ) {
+    movePlayers(1.05);
+  }else if( playerType == 'left') {
+    movePlayers(-0.05);
+  }
+  //do a short delay an begin kick off
+  renderKick(playerType);
+  
+  
+  
+}
+
+function renderKick( playerType ) {
+  currentJumpingPlayerType = playerType;
+  var xSign = ( playerType == 'left' ) ? (-1):(1);
+  var position = { playerX: Players[playerType].model.position.x, playerY: Players[playerType].model.position.y};
+  var target = { playerX: xSign*((window.innerWidth/2) + 200), playerY: (-30)};
+  var curRotation = 0;
+  
+  var update = function() {
+    curRotation += 20;
+    Players[playerType].model.rotation.z = de2ra( curRotation );
+    Players[playerType].model.position.x = position.playerX;
+    Players[playerType].model.position.y = position.playerY;
+    if( (curRotation % 180) == 0 ) { curRotation = 0; }
+  }; 
+  
+  //var tween = new TWEEN.Tween(position).to(target, 2000);  
+ 
+ var easing	= TWEEN.Easing.Quartic.EaseOut;
+
+ var tweenHead	= new TWEEN.Tween(position)
+			    .to(target, loosingDuration)
+			    .delay(100)
+			    .easing(easing)
+			    .onUpdate(update);
+			    
+  tweenHead.start();
+  animate( );
 }
 
 
