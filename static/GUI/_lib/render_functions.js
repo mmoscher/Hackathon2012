@@ -62,6 +62,25 @@ function init_scene() {
     pointLight.position.y = 50;
     pointLight.position.z = 130;
 
+    
+    rendererTable = new THREE.WebGLRenderer();
+    rendererTable.setSize( window.innerWidth, window.innerHeight );
+    
+    this.playerRight.render = new THREE.WebGLRenderer();
+    this.playerRight.render.setSize( window.innerWidth, window.innerHeight );
+    
+    this.playerLeft.render = new THREE.WebGLRenderer();
+    this.playerLeft.render.setSize( window.innerWidth, window.innerHeight );
+    
+    $('#table').append( rendererTable.domElement );
+    $('#playerRight').append( this.playerRight.render.domElement );
+    $('#playerLeft').append( this.playerLeft.render.domElement );
+    
+    //ugly but maybe useful
+        
+
+    
+    
     //link player model
     this.playerLeft.model = createPlayerModel( null , 'left' );  
     this.playerLeft.scene = new THREE.Scene();
@@ -69,6 +88,7 @@ function init_scene() {
     //this.playerLeft.scene.add(pointLight);
     
     this.playerRight.model = createPlayerModel( null , 'right' ); 
+    this.playerRight.model.updateMatrix();
     this.playerRight.scene = new THREE.Scene();
     this.playerRight.scene.add( this.playerRight.model );
     //this.playerRight.scene.add(pointLight);
@@ -85,24 +105,33 @@ function init_scene() {
     
     var tableRightLeg = createTableLeg('right');
     sceneTable.add( tableRightLeg );
+    
+    var loadedBoth = 0;
+    var textureImg_left = new Image();
+    textureImg_left.onload = function(){	
+      if( loadedBoth == 1 ) {
+	rendererTable.render( sceneTable, camera );
+	playerLeft.render.render( playerLeft.scene, camera );
+	playerRight.render.render( playerRight.scene, camera );
+      }else{
+	  loadedBoth += 1;
+      }
+    };
+    
+    var textureImg_right = new Image();
+    textureImg_right.onload = function(){	
+      if( loadedBoth == 1 ) {
+	rendererTable.render( sceneTable, camera );
+	playerLeft.render.render( playerLeft.scene, camera );
+	playerRight.render.render( playerRight.scene, camera );
+      }else{
+	  loadedBoth += 1;
+      }
+    };
+    
+    textureImg_right.src = "_img/RightWin.png";
+    textureImg_left.src = "_img/LeftWin.png";
 
-    rendererTable = new THREE.WebGLRenderer();
-    rendererTable.setSize( window.innerWidth, window.innerHeight );
-    
-    this.playerRight.render = new THREE.WebGLRenderer();
-    this.playerRight.render.setSize( window.innerWidth, window.innerHeight );
-    
-    this.playerLeft.render = new THREE.WebGLRenderer();
-    this.playerLeft.render.setSize( window.innerWidth, window.innerHeight );
-    
-    $('#table').append( rendererTable.domElement );
-    $('#playerRight').append( this.playerRight.render.domElement );
-    $('#playerLeft').append( this.playerLeft.render.domElement );
-    
-    rendererTable.render( sceneTable, camera );
-    this.playerLeft.render.render( this.playerLeft.scene, camera );
-    this.playerRight.render.render( this.playerRight.scene, camera );
-   
 }
 
 
@@ -115,9 +144,14 @@ function init_scene() {
 function createTable() {
       
   var sphereMaterial = new THREE.MeshLambertMaterial( { color: 0x7E4C36 } );
+  //var woodTexture = THREE.ImageUtils.loadTexture( '_img/24_small.jpg' );
+  //woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
+  //woodTexture.repeat.set( 3, 3 );
+  //var woodMaterial = new THREE.MeshBasicMaterial( { map: woodTexture } );
   var table = new THREE.CubeGeometry( tableWidth, tableHeight, 50 );
   var tableMeshUp = new THREE.Mesh( table , sphereMaterial );
-   
+
+  
   tableMeshUp.position.y = -( (playerHeight) + tableHeight );
   tableMeshUp.position.z = -30;
   
@@ -159,13 +193,15 @@ function createPlayerModel( _palyerID, _playerSide ) {
     }
      
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
-        map:THREE.ImageUtils.loadTexture(imgSource)
+	map:THREE.ImageUtils.loadTexture(imgSource)
     });
     img.map.needsUpdate = true; //ADDED
+    img.needsUpdate = true;
     
     playerModel = new THREE.PlaneGeometry(2*playerHeight, 2*playerHeight);
     var playerMeshUp = new THREE.Mesh( playerModel , img );
-        
+    playerMeshUp.needsUpdate = true;
+    
     if( _playerSide == 'left') {
       playerMeshUp.position.x = -(playerDistance);
     }else if( _playerSide == 'right') {
