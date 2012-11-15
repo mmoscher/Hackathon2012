@@ -1,5 +1,6 @@
 @import 'boilerplate';
 @import 'grid';
+@import url(http://fonts.googleapis.com/css?family=VT323);
 
 @columns: 10;
 @columns-width: 33;
@@ -7,17 +8,20 @@
 @total-width: 100%;
 @contentWidth:100%;
 
-@userListColor1: #222222;
-@userListColor2: #242424;
+@asideColor: #F2F4F8;
 @headerBGColor: #333333;
 @titleColor: #33b5e5;
 
+body{
+	font-family: 'VT323', cursive;
+	background-color:black;
+}
 .content{
 	.column(7)
 	}
 #aside {
 	.column(3);
-	background-color:#F2F4F8;
+	background-color:@asideColor;
 	div {
 		background-color:rgba(0, 0, 0, 0.07);
 
@@ -27,14 +31,18 @@
 	li {
 		list-stye: none;
 		display:block;
-		height:30px;
+		height:40px;
 		width:100%;
+		font-size:1.5em;
 		border-bottom-color:#D8DFEA;
 		border-bottom:1px solid;
-		padding:2px 3px
+		padding:10px 10px 0px 10px;
 
 		.inFight {
 			background:url('../images/notActive.gif');
+		}
+		&:hover{
+			background:lighten(@asideColor,10%);
 		}
 	}
 }
