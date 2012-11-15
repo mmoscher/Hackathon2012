@@ -352,20 +352,26 @@ socket.on('Turn Result', function (msg) {
     var ratio = fight.hitpoints[fight.challenger] / sum;
     console.log("Ratio: %o", ratio);
     movePlayers(ratio);
-    setTimeout(movePlayers, 200);
+    setTimeout(function() {movePlayers(ratio);}, 200);
 
-    flashInfo(defended ? "Pariert!" : "AUTSCH!!!")
+    flashInfo(defended ? "Pariert!" : "AUTSCH!!!");
 });
 
 socket.on('Fight Result', function (msg) {
     var fight = dec(msg);
+
+    var ratio;
     if (fight.hitpoints[fight.challenger] == 0) {
-        movePlayers(0);
+        ratio = 0;
     }
     else {
-        movePlayers(1);
+        ratio = 1;
     }
-    setTimeout(closeArena, 900);
+    movePlayers(ratio);
+    setTimeout(function() {movePlayers(ratio);}, 200);
+
+    flashInfo((fight.hitpoints[me] == 0) ? "VERLOREN!" : "GEWONNEN!!!");
+    setTimeout(closeArena, 1200);
 });
 
 
@@ -382,7 +388,7 @@ socket.on('Fight Ended', function (msg) {
     show("Fight between " + fight.challenger + " and " + fight.defendant + " ended " +
             fight.hitpoints[fight.challenger] + ":" + fight.hitpoints[fight.defendant]);
     show("Winner " + decoded.winner + " has new score " + decoded.winnerWins);
-});
+})  ;
 
 function opponent(fight, nick) {
     return (fight.challenger == nick) ? fight.defendant : fight.challenger;
