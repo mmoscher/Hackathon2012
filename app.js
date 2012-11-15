@@ -166,6 +166,10 @@ io.of("/chat").on('connection', function (client) {
     // msg: {to: nick}
     client.on('challenge', function (msg) {
         var to = dec(msg).to;
+        if (!clientsByNick[to]) {
+            clientsByNick[nick].emit('Challenge Declined',
+                enc({reason: "User does not exist."}));
+        }
         var fight = startFight(nick, to);
         if (fight == null) {
             clientsByNick[nick].emit('Challenge Declined',
@@ -219,7 +223,8 @@ io.of("/chat").on('connection', function (client) {
             clientsByNick[opp].emit('Fight Result', enc(fight));
             clientsByNick[nick].emit('Fight Result', enc(fight));
 
-            var msg = enc({fight:fight, winner: opp, winnerWins: winsByNick[opp]});
+            console.log("END: Sending fight: " + fight);
+            var msg = enc({fight: fight, winner: opp, winnerWins: winsByNick[opp]});
             client.broadcast.emit('Fight Ended', msg);
             client.emit('Fight Ended', msg);
         }

@@ -32,7 +32,7 @@
             padding: 10px;
             font-size: 1em;
             text-shadow: -1px 0 black, 0 1px black,
-                          1px 0 black, 0 -1px black;
+            1px 0 black, 0 -1px black;
         }
 
         #challenge .opponent {
@@ -56,7 +56,7 @@
             color: #bc8f8f;
             bottom: 30%;
             text-shadow: -1px 0 black, 0 1px black,
-                          1px 0 black, 0 -1px black;
+            1px 0 black, 0 -1px black;
         }
 
         #picture #challengerStatus {
@@ -75,7 +75,7 @@
             height: 30%;
             width: 100%;
             margin: 0;
-            color: #d0d0d0;
+            color: #c0c0c0;
             background: black;
             font-size: 1em;
         }
@@ -86,6 +86,7 @@
 
         #options li:hover,
         #options li:active {
+            cursor: pointer;
             color: #ffeeee;
         }
     </style>
@@ -95,25 +96,25 @@
 
 
 <div data-role="page">
-    <div id="arena" data-role="content">
-    <div id="challenge">
-        <span class="opponent">DIETER</span>
-        <span class="message">Mein Schwert wird dich aufspießen wie einen Schaschlik!</span>
-    </div>
-    <div id="picture">
-        <div class="status" id="challengerStatus">Hans ♥♥♥</div>
-        <div class="status" id="defendantStatus">♥♥♥ Dieter</div>
-    </div>
-    <ul id="options">
-        <li id="o1">Dann mach nicht damit rum wie mit einem Staubwedel!</li>
-        <li id="o2">Aha, mal wieder in der Nase gebohrt, wie?</li>
-        <li id="o3">Vielleicht solltest du es endlich mal benutzen?</li>
-    </ul>
+
+    <div id="arena" data-role="content" style="display: none;">
+        <div id="challenge">
+            <span class="opponent">DIETER</span>
+            <span class="message">Mein Schwert wird dich aufspießen wie einen Schaschlik!</span>
+        </div>
+        <div id="picture">
+            <div class="status" id="challengerStatus">Hans ♥♥♥</div>
+            <div class="status" id="defendantStatus">♥♥♥ Dieter</div>
+        </div>
+        <ul id="options">
+            <li id="o1">Dann mach nicht damit rum wie mit einem Staubwedel!</li>
+            <li id="o2">Aha, mal wieder in der Nase gebohrt, wie?</li>
+            <li id="o3">Vielleicht solltest du es endlich mal benutzen?</li>
+        </ul>
     </div>
 
-    <div id="lobby" data-role="content" style="display: none;">
-
-        <section id="sectLogin" style="display: none;"><form>
+    <div id="lobby" data-role="content">
+        <section id="sectLogin"><form>
             <label for="nick">Login</label><input type="text" id="nick" />
             <button id="login">Einloggen!</button>
         </form></section>
@@ -128,7 +129,6 @@
                 <ul id="users" data-role="listview" ></ul>
             </div>
         </section>
-
     </div><!-- /content  1 -->
 
 </div><!-- /page -->
@@ -263,32 +263,39 @@ $("#send").click(function(e) {
 // FIGHT ////////////////////////////////////////////////////////////////////////
 
 function openArena() {
-    $("lobby").hide();
-    $("arena").show();
+    hideOptions();
+    $("#lobby").hide();
+    $("#arena").show();
 }
 
 function closeArena() {
-    $("lobby").show();
-    $("arena").hide();
+    $("#lobby").show();
+    $("#arena").hide();
 }
 
-function showOptions(opponent, challenge, options, callback) {
-    $("#challenge .opponent").text(opponent);
-    $("#challenge .challenge").text(challenge);
+function showOptions(opponent, challengeText, options, callback) {
+    var challenge = $("#challenge");
+    challenge.find(".opponent").text(opponent);
+    challenge.find(".message").text(challengeText);
 
-    $("#options li").each(function (index, opt) {
+    $("#options li").each(function (i, opt) {
         $o = $(opt);
+        $o.show();
         $o.text(options[i]);
-        $o.click(function() { callback(index); });
+        $o.click(function() { callback(i); });
     });
 }
 
 function hideOptions() {
-    $("#challenge .opponent").text("");
-    $("#challenge .challenge").text("");
+    var challenge = $("#challenge");
+    challenge.find(".opponent").text(" ");
+    challenge.find(".message").text("Warte auf den Angriff deines Gegners!");
 
     $("#options li").each(function (index, opt) {
-        $o.text("");
+        $o = $(opt);
+        $o.hide();
+        $o.text(" ");
+        $o.off("click");
     });
 }
 
@@ -317,6 +324,7 @@ socket.on('Choose Attack', function (msg) {
     var fight = dec(msg);
     var options = fight.attackOptions;
     showOptions("", "Wähle deinen Angriff!", options, function(i) {
+        console.log("Sending option %o", i);
         socket.emit('attack', enc({option: i}));
         hideOptions();
     });
@@ -333,16 +341,28 @@ socket.on('Choose Answer', function (msg) {
     });
 });
 
+function hearts(hitpoints) {
+    var hearts = "";
+    for (var i = 0; i < hitpoints; ++i) {
+        hearts += "♥";
+    }
+    return hearts;
+}
+
 socket.on('Turn Result', function (msg) {
     var decoded = dec(msg);
     var fight = decoded.fight;
 
-    var challenger = fight.challenger
-    var defendant = fight.defendant
-    var challengerHp = fight.hitpoints[challenger];
-    var defendantHp = fight.hitpoints[defendant];
+    console.log("Turn result: %o", fight);
+    var challenger = fight.challenger + " " + hearts(fight.hitpoints[fight.challenger]);
+    var defendant = fight.defendant + " " + hearts(fight.hitpoints[fight.defendant]);
 
+    $("#challengerStatus").text(challenger);
+    $("#defendantStatus").text(defendant);
 
+    var defended = decoded.defended;
+
+    /*
     var attacker = fight.attacker;
     var defender = opponent(fight, fight.attacker);
     if (decoded.defended) {
@@ -353,11 +373,11 @@ socket.on('Turn Result', function (msg) {
     }
     show("Score: " + attacker + ": " + fight.hitpoints[attacker] + ", " +
             defender + ": " + fight.hitpoints[defender]);
+    */
 });
 
 socket.on('Fight Result', function (msg) {
     closeArena();
-
     var fight = dec(msg);
     if (fight.hitpoints[nick] == 0) {
         show("\nYou lost!");
@@ -388,7 +408,6 @@ function opponent(fight, nick) {
 }
 
 </script>
-
 
 </body>
 </html>
