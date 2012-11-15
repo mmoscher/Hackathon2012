@@ -34,9 +34,11 @@
             text-shadow: -1px 0 black, 0 1px black,
                           1px 0 black, 0 -1px black;
         }
+
         #challenge .opponent {
             color: #bc8f8f;
         }
+
         #picture {
             height: 60%;
             top: 10%;
@@ -45,10 +47,32 @@
             background-size: 100%;
             margin: 0;
         }
+
+        #picture .status {
+            position: absolute;
+            width: 30%;
+            height: 1.2em;
+            padding: 0.5em;
+            color: #bc8f8f;
+            bottom: 30%;
+            text-shadow: -1px 0 black, 0 1px black,
+                          1px 0 black, 0 -1px black;
+        }
+
+        #picture #challengerStatus {
+            text-align: left;
+            left: 0;
+        }
+
+        #picture #defendantStatus {
+            text-align: right;
+            right: 0;
+        }
+
         #options {
             position: absolute;
             bottom: 0;
-            min-height: 30%;
+            height: 30%;
             width: 100%;
             margin: 0;
             color: #d0d0d0;
@@ -76,18 +100,16 @@
         <span class="opponent">DIETER</span>
         <span class="message">Mein Schwert wird dich aufspießen wie einen Schaschlik!</span>
     </div>
-    <div id="picture"></div>
+    <div id="picture">
+        <div class="status" id="challengerStatus">Hans ♥♥♥</div>
+        <div class="status" id="defendantStatus">♥♥♥ Dieter</div>
+    </div>
     <ul id="options">
         <li id="o1">Dann mach nicht damit rum wie mit einem Staubwedel!</li>
         <li id="o2">Aha, mal wieder in der Nase gebohrt, wie?</li>
         <li id="o3">Vielleicht solltest du es endlich mal benutzen?</li>
     </ul>
     </div>
-
-
-    <div data-role="header" style="display: none;">
-        <h1>Piratenkampf!</h1>
-    </div><!-- /header -->
 
     <div id="lobby" data-role="content" style="display: none;">
 
@@ -240,6 +262,37 @@ $("#send").click(function(e) {
 
 // FIGHT ////////////////////////////////////////////////////////////////////////
 
+function openArena() {
+    $("lobby").hide();
+    $("arena").show();
+}
+
+function closeArena() {
+    $("lobby").show();
+    $("arena").hide();
+}
+
+function showOptions(opponent, challenge, options, callback) {
+    $("#challenge .opponent").text(opponent);
+    $("#challenge .challenge").text(challenge);
+
+    $("#options li").each(function (index, opt) {
+        $o = $(opt);
+        $o.text(options[i]);
+        $o.click(function() { callback(index); });
+    });
+}
+
+function hideOptions() {
+    $("#challenge .opponent").text("");
+    $("#challenge .challenge").text("");
+
+    $("#options li").each(function (index, opt) {
+        $o.text("");
+    });
+}
+
+
 // receive a challgenge: {to: nick}
 socket.on('Incoming Challenge', function (msg) {
     if(confirm(dec(msg).from + " has challenged you. Accept?")) {
@@ -256,19 +309,17 @@ socket.on('Challenge Declined', function (msg) {
 
 socket.on('Init Fight', function (msg) {
     var fight = dec(msg).fight;
-    $("#arena").show();
+    openArena();
 });
 
 socket.on('Choose Attack', function (msg) {
     // console.log('Choose Attack received (%o)', msg);
     var fight = dec(msg);
     var options = fight.attackOptions;
-    var message = "Choose an attack! \n";
-    for (var i = 0; i < options.length; ++i) {
-        message += "(" + i + ") " + options[i] + "\n";
-    }
-    var number = prompt(message, 0);
-    socket.emit('attack', enc({option: number}));
+    showOptions("", "Wähle deinen Angriff!", options, function(i) {
+        socket.emit('attack', enc({option: i}));
+        hideOptions();
+    });
 });
 
 socket.on('Choose Answer', function (msg) {
@@ -276,17 +327,22 @@ socket.on('Choose Answer', function (msg) {
     var decoded = dec(msg);
     var options = decoded.options;
 
-    var message = '"' + decoded.attack + '"\n\nChoose your answer wisely! \n';
-    for (var i = 0; i < decoded.options.length; ++i) {
-        message += "(" + i + ") " + decoded.options[i] + "\n";
-    }
-    var number = prompt(message, 0);
-    socket.emit('respond', enc({option: number}));
+    showOptions(opponent(nick), decoded.attack, options, function(i) {
+        socket.emit('respond', enc({option: i}));
+        hideOptions();
+    });
 });
 
 socket.on('Turn Result', function (msg) {
     var decoded = dec(msg);
     var fight = decoded.fight;
+
+    var challenger = fight.challenger
+    var defendant = fight.defendant
+    var challengerHp = fight.hitpoints[challenger];
+    var defendantHp = fight.hitpoints[defendant];
+
+
     var attacker = fight.attacker;
     var defender = opponent(fight, fight.attacker);
     if (decoded.defended) {
@@ -300,6 +356,8 @@ socket.on('Turn Result', function (msg) {
 });
 
 socket.on('Fight Result', function (msg) {
+    closeArena();
+
     var fight = dec(msg);
     if (fight.hitpoints[nick] == 0) {
         show("\nYou lost!");
