@@ -133,6 +133,7 @@ socket.on('Log', function (msg) {
 $(document).ready(function(){
     socket.emit('get users');
     $("#userList").css({'height':$(window).height() - 30});
+    $("#arena").css({'height':$(window).height()});
 
     $("#login").click(function(e) {
         var nick = $("#nick").val();
@@ -254,11 +255,13 @@ socket.on('Init Fight', function (msg) {
 function openArena() {
     hideOptions(" ", " ");
     $("#lobby").hide();
+    $("#header").hide();
     $("#arena").show();
 }
 
 function closeArena() {
     $("#lobby").show();
+    $("#header").show();
     $("#arena").hide();
 }
 
@@ -302,27 +305,6 @@ function updateStatus(fight) {
 }
 
 
-// receive a challgenge: {to: nick}
-socket.on('Incoming Challenge', function (msg) {
-    if(confirm(dec(msg).from + " has challenged you. Accept?")) {
-        socket.emit('challenge accepted', "");
-    }
-    else {
-        socket.emit('challenge declined', "");
-    }
-});
-
-socket.on('Challenge Declined', function (msg) {
-    show("Challenge declined: " + dec(msg).reason);
-});
-
-socket.on('Init Fight', function (msg) {
-    var fight = dec(msg);
-    openArena();
-    hideOptions(" ", "Warte auf den Angriff deines Gegners!");
-    updateStatus(fight);
-});
-
 socket.on('Choose Attack', function (msg) {
     // console.log('Choose Attack received (%o)', msg);
     var fight = dec(msg);
@@ -363,7 +345,7 @@ socket.on('Turn Result', function (msg) {
 socket.on('Fight Result', function (msg) {
     closeArena();
     var fight = dec(msg);
-    if (fight.hitpoints[nick] == 0) {
+    if (fight.hitpoints[me] == 0) {
         show("\nYou lost!");
     }
     else {
