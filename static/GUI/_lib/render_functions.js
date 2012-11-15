@@ -51,7 +51,9 @@ function de2ra (degree) { return degree*(Math.PI/180); }
 
 function init_scene() {
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+    var width = Math.round($("#picture").width() * 1.4);
+    var height = Math.round($("#picture").height() * 1.4);
+    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000 );
     camera.position.z = 300;
     
     // create a point light
@@ -88,13 +90,13 @@ function init_scene() {
     sceneTable.add( tableRightLeg );
 
     rendererTable = new THREE.WebGLRenderer();
-    rendererTable.setSize( window.innerWidth, window.innerHeight );
-    
+    rendererTable.setSize( width, height );
+
     this.playerRight.render = new THREE.WebGLRenderer();
-    this.playerRight.render.setSize( window.innerWidth, window.innerHeight );
-    
+    this.playerRight.render.setSize( width, height );
+
     this.playerLeft.render = new THREE.WebGLRenderer();
-    this.playerLeft.render.setSize( window.innerWidth, window.innerHeight );
+    this.playerLeft.render.setSize( width, height );
     
     $('#table').append( rendererTable.domElement );
     $('#playerRight').append( this.playerRight.render.domElement );
@@ -253,9 +255,9 @@ function loosingPlayerModel( _playerSide ) {
   
     var imgSource = "";
     if(_playerSide == 'left') {
-      imgSource = "_img/LeftLose.png";
+      imgSource = "GUI/_img/LeftLose.png";
     }else{
-      imgSource = "_img/RightLose.png";
+      imgSource = "GUI/_img/RightLose.png";
     }
     
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
@@ -272,9 +274,9 @@ function winnigPlayerModel( _playerSide ) {
   
     var imgSource = "";
     if(_playerSide == 'left') {
-      imgSource = "_img/LeftWin.png";
+      imgSource = "GUI/_img/LeftWin.png";
     }else{
-      imgSource = "_img/RightWin.png";
+      imgSource = "GUI/_img/RightWin.png";
     }
     
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
