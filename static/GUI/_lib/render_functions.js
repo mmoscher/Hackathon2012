@@ -51,9 +51,7 @@ function de2ra (degree) { return degree*(Math.PI/180); }
 
 function init_scene() {
 
-    var width = $("#picture").width();
-    var height = $("#picture").height();
-    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000 );
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     camera.position.z = 300;
     
     // create a point light
@@ -64,25 +62,6 @@ function init_scene() {
     pointLight.position.y = 50;
     pointLight.position.z = 130;
 
-    
-    rendererTable = new THREE.WebGLRenderer();
-    rendererTable.setSize( width, height );
-    
-    this.playerRight.render = new THREE.WebGLRenderer();
-    this.playerRight.render.setSize( width, height );
-    
-    this.playerLeft.render = new THREE.WebGLRenderer();
-    this.playerLeft.render.setSize( width, height );
-    
-    $('#table').append( rendererTable.domElement );
-    $('#playerRight').append( this.playerRight.render.domElement );
-    $('#playerLeft').append( this.playerLeft.render.domElement );
-    
-    //ugly but maybe useful
-        
-
-    
-    
     //link player model
     this.playerLeft.model = createPlayerModel( null , 'left' );  
     this.playerLeft.scene = new THREE.Scene();
@@ -107,32 +86,25 @@ function init_scene() {
     
     var tableRightLeg = createTableLeg('right');
     sceneTable.add( tableRightLeg );
+
+    rendererTable = new THREE.WebGLRenderer();
+    rendererTable.setSize( window.innerWidth, window.innerHeight );
     
-    var loadedBoth = 0;
-    var textureImg_left = new Image();
-    textureImg_left.onload = function(){	
-      if( loadedBoth == 1 ) {
-	rendererTable.render( sceneTable, camera );
-	playerLeft.render.render( playerLeft.scene, camera );
-	playerRight.render.render( playerRight.scene, camera );
-      }else{
-	  loadedBoth += 1;
-      }
-    };
+    this.playerRight.render = new THREE.WebGLRenderer();
+    this.playerRight.render.setSize( window.innerWidth, window.innerHeight );
     
-    var textureImg_right = new Image();
-    textureImg_right.onload = function(){	
-      if( loadedBoth == 1 ) {
-	rendererTable.render( sceneTable, camera );
-	playerLeft.render.render( playerLeft.scene, camera );
-	playerRight.render.render( playerRight.scene, camera );
-      }else{
-	  loadedBoth += 1;
-      }
-    };
+    this.playerLeft.render = new THREE.WebGLRenderer();
+    this.playerLeft.render.setSize( window.innerWidth, window.innerHeight );
     
-    textureImg_right.src = "_img/RightWin.png";
-    textureImg_left.src = "_img/LeftWin.png";
+    $('#table').append( rendererTable.domElement );
+    $('#playerRight').append( this.playerRight.render.domElement );
+    $('#playerLeft').append( this.playerLeft.render.domElement );
+    
+    //ugly but maybe useful
+        
+    rendererTable.render( sceneTable, camera );
+    this.playerLeft.render.render( this.playerLeft.scene, camera );
+    this.playerRight.render.render( this.playerRight.scene, camera );
 
 }
 

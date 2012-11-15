@@ -109,10 +109,10 @@ function init_scene() {
     var loadedBoth = 0;
     var textureImg_left = new Image();
     textureImg_left.onload = function(){	
-      if( loadedBoth == 1 ) {
+      if( loadedBoth >= 1 ) {
 	rendererTable.render( sceneTable, camera );
-	playerLeft.render.render( this.playerLeft.scene, camera );
-	playerRight.render.render( this.playerRight.scene, camera );
+	playerLeft.render.render( playerLeft.scene, camera );
+	playerRight.render.render( playerRight.scene, camera );
       }else{
 	  loadedBoth += 1;
       }
@@ -120,10 +120,10 @@ function init_scene() {
     
     var textureImg_right = new Image();
     textureImg_right.onload = function(){	
-      if( loadedBoth == 1 ) {
+      if( loadedBoth >= 1 ) {
 	rendererTable.render( sceneTable, camera );
-	playerLeft.render.render( this.playerLeft.scene, camera );
-	playerRight.render.render( this.playerRight.scene, camera );
+	playerLeft.render.render( playerLeft.scene, camera );
+	playerRight.render.render( playerRight.scene, camera );
       }else{
 	  loadedBoth += 1;
       }
@@ -131,7 +131,12 @@ function init_scene() {
     
     textureImg_right.src = "_img/RightWin.png";
     textureImg_left.src = "_img/LeftWin.png";
-
+    //load more pictres
+    var textureImg_LeftLoose = new Image();
+    var textureImg_RightLoose = new Image();
+    
+    textureImg_RightLoose.src = "_img/RightLose.png";
+    textureImg_LeftLoose.src = "_img/LeftLose.png";
 }
 
 
@@ -196,11 +201,9 @@ function createPlayerModel( _palyerID, _playerSide ) {
 	map:THREE.ImageUtils.loadTexture(imgSource)
     });
     img.map.needsUpdate = true; //ADDED
-    img.needsUpdate = true;
     
     playerModel = new THREE.PlaneGeometry(2*playerHeight, 2*playerHeight);
     var playerMeshUp = new THREE.Mesh( playerModel , img );
-    playerMeshUp.needsUpdate = true;
     
     if( _playerSide == 'left') {
       playerMeshUp.position.x = -(playerDistance);
