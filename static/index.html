@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Lobby</title>
+    <title>Die Schreibtischpiraten!</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
@@ -68,29 +68,26 @@ function show(text, user) {
 }
 
 function userNameClick(e){
-    console.log(users[$(e.target).data("name")]);
-    if(!users[$(e.target).data("name")].fights){
-        dialog(e.target, $(e.target).data("name"),
-                "Was willst du tun?",
-                [{
-                    name:"challenge",
-                    title:"Herausfordern",
-                    do:function(e){
-                        console.log("Sending name: %o", $(this).data('name'));
-
-                        if(me != null) {
-                            socket.emit('challenge', enc({to: $(this).data('name')}));
-                        }else{
-                            dialog($("#sectLogin"), "You're not Logged In!", "Du musst eingeloggt sein, um einen anderen Spieler herrauszufordern.");
-                        }
+    if (users[$(e.target).data("name")].fights)
+        return;
+    dialog(e.target, $(e.target).data("name"),
+            "Was willst du tun?",
+            [{
+                name:"challenge",
+                title:"Herausfordern",
+                do:function(e){
+                    if(me != null) {
+                        socket.emit('challenge', enc({to: $(this).data('name')}));
+                    }else{
+                        dialog($("#sectLogin"), "You're not Logged In!", "Du musst eingeloggt sein, um einen anderen Spieler herrauszufordern.");
                     }
-                },{
-                    name:"abort",
-                    title:"Abbrechen",
-                    do:function(e){}
-                }]
-        );
-    }
+                }
+            },{
+                name:"abort",
+                title:"Abbrechen",
+                do:function(e){}
+            }]
+    );
 }
 /**
  Shows a dialog popup
@@ -164,7 +161,7 @@ $(document).ready(function(){
  */
 socket.on('Nick Not Allowed', function (msg) {
     var ctx = dialog($("#sectLogin"), "Name "+dec(msg).nick + " nicht OK!",
-                     "Reason: " + dec(msg).reason);
+            "Grund: " + dec(msg).reason);
     setTimeout(function() {$(ctx).data("overlay").close();}, 1000);
 });
 
@@ -192,9 +189,9 @@ socket.on('Fight Started', function(msg){
         $("#user-" + fighter.defendant.replace(/ /g,"_")).addClass("inFight");
     }
 });
+
 socket.on('Fight Ended', function(msg){
-    var dec = dec(msg);
-    var fighter = dec;
+    var fighter = dec(msg);
     if(typeof users[fighter.challenger] != 'undefined'){
         users[fighter.challenger].finishedFight();
         $("#user-" + fighter.challenger).removeClass("inFight");
@@ -204,20 +201,17 @@ socket.on('Fight Ended', function(msg){
         $("#user-" + fighter.defendant).removeClass("inFight");
     }
 
-    show("Fight between " + fighter.challenger + " and " + fighter.defendant + " ended " +
-            fight.hitpoints[fighter.challenger] + ":" + fighter.hitpoints[fighterdefendant]);
-    show("Winner " + dec.winner + " has new score " + dec.winnerWins);
+    var loser = (fighter.winner == fighter.challenger) ? fighter.defendant : fighter.challenger;
+    show(fighter.winner + " hat " + loser + " über die Planke geschickt!");
+    show(fighter.winner + " hat jetzt" + fighter.winnerWins + " Punkte");
 });
 
 socket.on('Users', function (msg) {
-    console.log(dec(msg));
     var list = dec(msg).users;
     var fighters = dec(msg).fighters;
     for (var i = 0; i < list.length; ++i) {
         users[list[i]] = new User(list[i]);
-        console.log(list[i]);
-        if (fighters.indexOf(list[i] != -1)){ 
-            console.log(list[i] + " in fight");
+        if (fighters.indexOf(list[i] != -1)){
             users[list[i]].startFight();
         }
     };
@@ -249,9 +243,9 @@ socket.on('Incoming Challenge', function (msg) {
                     socket.emit('challenge accepted', "");
                 }
                 },{name:"decline",title:"Nein", do:function(e){
-                socket.emit('challenge declined', "");
-            }
-            }]);
+                    socket.emit('challenge declined', "");
+                }
+                }]);
 });
 
 socket.on('Challenge Declined', function (msg) {
@@ -342,15 +336,36 @@ socket.on('Choose Answer', function (msg) {
     // console.log('Choose Answer received (%o)', msg);
     var fight = dec(msg);
     var options = fight.answerOptions;
+
+    function timeUp() {
+        flashInfo("Zeit vorbei :(");
+        socket.emit('respond', enc({option: Math.round()}));
+        clearInterval(int);
+        hideOptions(" ", "Warte auf den nächsten Angriff deines Gegners!");
+    }
+
+
+    var t1 = setTimeout(timeUp, 5000);
+    var countsLeft = 5;
+    function count() {
+        countsLeft -=1;
+        if (countsLeft <= 3) {
+            flashInfo(countsLeft + "...");
+        }
+    }
+    var int = setInterval(count, 1000);
+
     showOptions(opponent(fight, nick), fight.attack, options, function(i) {
+        clearTimeout(t1);
+        clearInterval(int);
         socket.emit('respond', enc({option: i}));
         hideOptions(" ", "Warte auf den nächsten Angriff deines Gegners!");
     });
 });
 
-function flashMessage(text) {
-    $("#flash").text(text).show();
-    setTimeout(function() {$("#flash").fadeOut();}, 500);
+function flashInfo(text) {
+    $("#flashInfo").text(text).show();
+    setTimeout(function() {$("#flashInfo").fadeOut();}, 500);
 }
 
 socket.on('Turn Result', function (msg) {
@@ -362,18 +377,33 @@ socket.on('Turn Result', function (msg) {
         hideOptions(opponent(fight, nick), fight.answer);
     }
 
-    // flashMessage(defended ? "Pariert!" : "AUTSCH!!!")
+    var sum = 0;
+    sum += fight.hitpoints[fight.challenger];
+    sum += fight.hitpoints[fight.defendant];
+
+    var ratio = fight.hitpoints[fight.challenger] / sum;
+    setTimeout(function() {movePlayers(ratio);}, 200);
+    movePlayers(ratio);
+
+    flashInfo(defended ? "Pariert!" : "AUTSCH!!!");
 });
 
 socket.on('Fight Result', function (msg) {
-    closeArena();
     var fight = dec(msg);
-    if (fight.hitpoints[me] == 0) {
-        show("\nYou lost!");
+
+    var ratio;
+    if (fight.hitpoints[fight.challenger] == 0) {
+        ratio = 0;
     }
     else {
-        show("\nYou won!");
+        ratio = 1;
     }
+
+    flashInfo((fight.hitpoints[me] == 0) ? "VERLOREN!" : "GEWONNEN!!!");
+    setTimeout(function() {closeArena();}, 2500);
+
+    setTimeout(function() {movePlayers(ratio);}, 2500);
+    movePlayers(ratio);
 });
 
 
@@ -385,7 +415,6 @@ socket.on('Fight Started', function (msg) {
 });
 
 
-
 function opponent(fight, nick) {
     return (fight.challenger == nick) ? fight.defendant : fight.challenger;
 }
@@ -394,7 +423,7 @@ function opponent(fight, nick) {
 <div data-role="page">
 
     <div data-role="header" id="header">
-        <div class="title"><h1>PiratenKampf</h1></div>
+        <div class="title"><h1>Die Schreibtischpiraten!</h1></div>
         <div class="userDiv">
             <div class="user">
             </div>
@@ -412,9 +441,9 @@ function opponent(fight, nick) {
 
             <section id="sectLobby" style="display: none;" class="ui-grid-a">
                 <form>
-                    <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
-                    <label for="text">Deine Nachricht Matrose</label><input type="text" id="text"/><br />
-                    <button id="send">Shout! Like a pirate</button>
+                    <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly style="display: none;"></textarea></br>
+                    <label for="text">Klicke auf einen Piraten,<br> um das Gefecht zu beginnen!</label><input type="text" id="text" style="display: none;"/><br />
+                    <button id="send" style="display: none;">Shout! Like a pirate</button>
                 </form>
             </section>
         </div>
@@ -443,6 +472,8 @@ function opponent(fight, nick) {
             <li id="o3"></li>
         </ul>
     </div>
+
+    <div class="status" id="flashInfo"></div>
 
 </div>
 

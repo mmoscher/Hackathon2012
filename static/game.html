@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Lobby</title>
+    <title>Die Schreibtischpiraten!</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
@@ -76,8 +76,6 @@ function userNameClick(e){
                 name:"challenge",
                 title:"Herausfordern",
                 do:function(e){
-                    console.log("Sending name: %o", $(this).data('name'));
-
                     if(me != null) {
                         socket.emit('challenge', enc({to: $(this).data('name')}));
                     }else{
@@ -163,7 +161,7 @@ $(document).ready(function(){
  */
 socket.on('Nick Not Allowed', function (msg) {
     var ctx = dialog($("#sectLogin"), "Name "+dec(msg).nick + " nicht OK!",
-                     "Reason: " + dec(msg).reason);
+                     "Grund: " + dec(msg).reason);
     setTimeout(function() {$(ctx).data("overlay").close();}, 1000);
 });
 
@@ -191,6 +189,7 @@ socket.on('Fight Started', function(msg){
         $("#user-" + fighter.defendant.replace(/ /g,"_")).addClass("inFight");
     }
 });
+
 socket.on('Fight Ended', function(msg){
     var fighter = dec(msg);
     if(typeof users[fighter.challenger] != 'undefined'){
@@ -337,7 +336,28 @@ socket.on('Choose Answer', function (msg) {
     // console.log('Choose Answer received (%o)', msg);
     var fight = dec(msg);
     var options = fight.answerOptions;
+
+    function timeUp() {
+        flashInfo("Zeit vorbei :(");
+        socket.emit('respond', enc({option: Math.round()}));
+        clearInterval(int);
+        hideOptions(" ", "Warte auf den nächsten Angriff deines Gegners!");
+    }
+
+
+    var t1 = setTimeout(timeUp, 5000);
+    var countsLeft = 5;
+    function count() {
+        countsLeft -=1;
+        if (countsLeft <= 3) {
+            flashInfo(countsLeft + "...");
+        }
+    }
+    var int = setInterval(count, 1000);
+
     showOptions(opponent(fight, nick), fight.attack, options, function(i) {
+        clearTimeout(t1);
+        clearInterval(int);
         socket.emit('respond', enc({option: i}));
         hideOptions(" ", "Warte auf den nächsten Angriff deines Gegners!");
     });
@@ -362,9 +382,8 @@ socket.on('Turn Result', function (msg) {
     sum += fight.hitpoints[fight.defendant];
 
     var ratio = fight.hitpoints[fight.challenger] / sum;
-    console.log("Ratio: %o", ratio);
-    movePlayers(ratio);
     setTimeout(function() {movePlayers(ratio);}, 200);
+    movePlayers(ratio);
 
     flashInfo(defended ? "Pariert!" : "AUTSCH!!!");
 });
@@ -379,11 +398,12 @@ socket.on('Fight Result', function (msg) {
     else {
         ratio = 1;
     }
-    movePlayers(ratio);
-    setTimeout(function() {movePlayers(ratio);}, 200);
 
     flashInfo((fight.hitpoints[me] == 0) ? "VERLOREN!" : "GEWONNEN!!!");
-    setTimeout(closeArena, 1200);
+    setTimeout(function() {closeArena();}, 2500);
+
+    setTimeout(function() {movePlayers(ratio);}, 2500);
+    movePlayers(ratio);
 });
 
 
@@ -403,7 +423,7 @@ function opponent(fight, nick) {
 <div data-role="page">
 
     <div data-role="header" id="header">
-        <div class="title"><h1>PiratenKampf</h1></div>
+        <div class="title"><h1>Die Schreibtischpiraten!</h1></div>
         <div class="userDiv">
             <div class="user">
             </div>
@@ -421,9 +441,9 @@ function opponent(fight, nick) {
 
             <section id="sectLobby" style="display: none;" class="ui-grid-a">
                 <form>
-                    <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
-                    <label for="text">Deine Nachricht Matrose</label><input type="text" id="text"/><br />
-                    <button id="send">Shout! Like a pirate</button>
+                    <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly style="display: none;"></textarea></br>
+                    <label for="text">Klicke auf einen Piraten,<br> um das Gefecht zu beginnen!</label><input type="text" id="text" style="display: none;"/><br />
+                    <button id="send" style="display: none;">Shout! Like a pirate</button>
                 </form>
             </section>
         </div>

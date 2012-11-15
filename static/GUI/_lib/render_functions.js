@@ -30,7 +30,7 @@ var scenePlayerLeft;
 var scenePlayerRight;
 
 //global vars
-var playerHeight= 25;
+var playerHeight= 30;
 var tableHeight = 10;
 var tableLegLength = 60;
 var tableWidth = 340;
@@ -293,9 +293,9 @@ function movePlayers( destinationQuotient ) {
   //destination 1.0 -> player right win
   //destination 0.0 -> player left win
   
-  if( parseFloat(destinationQuotient) == 1.0 ) {
+  if( parseFloat(destinationQuotient) > 0.999 ) {
       return beginKickPlayer('right');
-  }else if( destinationQuotient == 0 ) {
+  }else if( destinationQuotient < 0.001 ) {
       return beginKickPlayer('left');
   }
   

@@ -210,13 +210,20 @@ io.of("/fight").on('connection', function (client) {
 
     client.on('respond', function (msg) {
         var fight = fightByNick[nick];
-        fight.answer = fight.answerOptions[dec(msg).option];
+
+        if (dec(msg).option == -1) {
+            fight.answer = (challenges.answers[fight.attack] + 1) % 3;
+        }
+        else {
+            fight.answer = fight.answerOptions[dec(msg).option];
+        }
 
         var defended = true;
         if (fight.answer != challenges.answers[fight.attack]) {
             fight.hitpoints[nick] -= 1;
             defended = false;
         }
+
         var opp = opponent(nick);
         clientsByNick[opp].emit('Turn Result', enc({defended: defended, fight: fight}));
         clientsByNick[nick].emit('Turn Result', enc({defended: defended, fight: fight}));
@@ -226,7 +233,7 @@ io.of("/fight").on('connection', function (client) {
             clientsByNick[opp].emit('Fight Result', enc(fight));
             clientsByNick[nick].emit('Fight Result', enc(fight));
 
-            console.log("END: Sending fight: " + fight);
+            console.log("END: Sending fight: " + enc(fight));
             var msg = enc({fight: fight, winner: opp, winnerWins: winsByNick[opp]});
             client.broadcast.emit('Fight Ended', msg);
             client.emit('Fight Ended', msg);
