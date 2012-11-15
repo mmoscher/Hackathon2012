@@ -8,6 +8,8 @@
     <link rel="stylesheet/less" type="text/css" href="stylesheets/game.less">
     <script src="/less.min.js" type="text/javascript"></script>
     <script src="jquery.md5.js" type="text/javascript"></script>
+    <script src="jquery.touchclick.min.js" type="text/javascript"></script>
+    <script src="jquery.tools.min.js" type="text/javascript"></script>
 </head>
 
 <body>
@@ -16,6 +18,7 @@
         var socket = io.connect('http://' + location.host + '/chat');
 
         var users = {};
+        var me = null;
 
 
         /**
@@ -58,28 +61,61 @@
             $out.val($out.val() + text + "\n");
             $out.scrollTop($out[0].scrollHeight);
         }
+        function challenge(e){
+            if(me != null)
+                socket.emit('challenge', enc({to: $(e.target).data('name')}));
+        }
+        function userNameClick(e){
+                        dialog(e.target, $(e.target).data("name"),
+                            "Was willst du tun?",
+                            [
+                            {name:"challenge", title:"Herausfordern", do:function(e){
+                                console.log("challenge");
+                                }
+                            },{name:"pm",title:"Private Nachricht", do:function(e){
+                                console.log(e);
+                                }
+                            }]
+                            );
+        }   
         /**
          Shows a dialog popup
          @param: string title
          @param: string text Text to show
          @param: object buttons what do do [{name:name, title:title, do:function()}]
          */
-        function dialog(title, text, buttons){
+        function dialog(ctx,title, text, b){
             var buttons = [];
-            $(buttons).each(function(i, e){
+            $(b).each(function(i, e){
                 var button = $("<button>").addClass(e.name).text(e.title); 
-                buttons.push = button;
-                button.onClick(e.do);
+                buttons.push(button);
+                button.click(function(){
+                    if(e.do != undefined && typeof e.do == 'function') e.do(ctx);
+                });
 
             });
+            console.log(buttons);
             var dialog = $("<div>").addClass("modal").
             append($("<h2>").text(title)).
             append($("<p>").text(text)).
             append($("<p>").append(buttons));
 
+            $("body").append(dialog);
+            $(ctx).overlay({target:dialog,load: true})
+
 
         }
+        function hideURLbar() {
+            if (window.location.hash.indexOf('#') == -1) {
+                window.scrollTo(0, 1);
+            }
+        }
 
+        if (navigator.userAgent.indexOf('iPhone') != -1 || navigator.userAgent.indexOf('Android') != -1) {
+            addEventListener("load", function() {
+                    setTimeout(hideURLbar, 0);
+            }, false);
+        }
         socket.on('Log', function (msg) {
             log("[SERVER] " + dec(msg).title, enc(dec(msg).payload));
         });
@@ -177,12 +213,16 @@
                 if ($.inArray(list[i], fighters)) users[list[i]].startFight();
             };
             $.each(users, function(key, val){
-                 $("#users").append($("<li id='user-"+val.name+"'>" + val.name + "</li>"));
+                 $("#users").append(
+                    $("<li id='user-"+val.name+"' data-name="+val.name+">" + val.name + "</li>").touchClick(function(e){userNameClick(e)}).click(function(e){userNameClick(e)})
+                );
             });
+
         });
 
         socket.on('Login', function (msg) {
             var nick = dec(msg).nick;
+            me = nick;
             show("Welcome, " + nick + "!");
             $("#header .user").append($("<a>").text(nick));
             $("#header .user").prepend($("<img>").attr({'src':"http://unicornify.appspot.com/avatar/"+ $.md5(nick)+"?s=25&v=3"}));
