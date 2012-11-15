@@ -70,7 +70,7 @@ var clientsByNick = {};
 var fightByNick = {};
 
 
-io.of("/chat").on('connection', function (client) {
+io.of("/fight").on('connection', function (client) {
     // client.emit('welcome', { hello: 'world' });
 
     var nick;
@@ -192,6 +192,7 @@ io.of("/chat").on('connection', function (client) {
         client.emit('Init Fight', enc(fight));
         clientsByNick[opponent(nick)].emit('Init Fight', enc(fight));
         client.broadcast.emit('Fight Started', enc(fight));
+
         startAttack(fight);
     });
 

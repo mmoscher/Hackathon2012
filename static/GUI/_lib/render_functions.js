@@ -51,7 +51,9 @@ function de2ra (degree) { return degree*(Math.PI/180); }
 
 function init_scene() {
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+    var width = $("#picture").width();
+    var height = $("#picture").height();
+    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000 );
     camera.position.z = 300;
     
     // create a point light
@@ -64,13 +66,13 @@ function init_scene() {
 
     
     rendererTable = new THREE.WebGLRenderer();
-    rendererTable.setSize( window.innerWidth, window.innerHeight );
+    rendererTable.setSize( width, height );
     
     this.playerRight.render = new THREE.WebGLRenderer();
-    this.playerRight.render.setSize( window.innerWidth, window.innerHeight );
+    this.playerRight.render.setSize( width, height );
     
     this.playerLeft.render = new THREE.WebGLRenderer();
-    this.playerLeft.render.setSize( window.innerWidth, window.innerHeight );
+    this.playerLeft.render.setSize( width, height );
     
     $('#table').append( rendererTable.domElement );
     $('#playerRight').append( this.playerRight.render.domElement );
