@@ -3,8 +3,29 @@
  * foundamental jQuery stuff
  */
 
-var camera, scene, renderer;
-var geometry, material, mesh;
+this.playerLeft = {
+		      model: null,
+		      scene: null,
+		      render: null,
+		      nickname: "",
+		      points: 0,
+		      hasTurn: true
+		  };
+		  
+this.playerRight = {
+		      model: null,
+		      scene: null,
+		      render: null,
+		      nickname: "",
+		      points: 0,
+		      hasTurn: false
+		  };
+		  
+this.Players = { right: this.playerRight, left: this.playerLeft };
+
+
+var camera;
+
 var scenePlayerLeft;
 var scenePlayerRight;
 
@@ -41,20 +62,16 @@ function init_scene() {
     pointLight.position.y = 50;
     pointLight.position.z = 130;
 
-    
-    
-    
-
     //link player model
     this.playerLeft.model = createPlayerModel( null , 'left' );  
     this.playerLeft.scene = new THREE.Scene();
     this.playerLeft.scene.add( this.playerLeft.model );
-    this.playerLeft.scene.add(pointLight);
+    //this.playerLeft.scene.add(pointLight);
     
     this.playerRight.model = createPlayerModel( null , 'right' ); 
     this.playerRight.scene = new THREE.Scene();
     this.playerRight.scene.add( this.playerRight.model );
-    this.playerRight.scene.add(pointLight);
+    //this.playerRight.scene.add(pointLight);
     
     
     sceneTable = new THREE.Scene();
@@ -140,22 +157,15 @@ function createPlayerModel( _palyerID, _playerSide ) {
     }else{
       imgSource = "_img/RightWin.png";
     }
-  
-    
-    //var sphereMaterial = new THREE.MeshLambertMaterial( { color: 0xFF0000 } );
-    
+     
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
         map:THREE.ImageUtils.loadTexture(imgSource)
     });
     img.map.needsUpdate = true; //ADDED
     
-    //var playerModel = new THREE.SphereGeometry( radius, segments, rings);
     playerModel = new THREE.PlaneGeometry(2*playerHeight, 2*playerHeight);
     var playerMeshUp = new THREE.Mesh( playerModel , img );
-    
-   //playerMeshUp.position.y = 100;
-    //playerMeshUp.position.z = 100;
-    
+        
     if( _playerSide == 'left') {
       playerMeshUp.position.x = -(playerDistance);
     }else if( _playerSide == 'right') {
@@ -171,23 +181,13 @@ function createPlayerModel( _palyerID, _playerSide ) {
 
     // changes to the normals
     playerMeshUp.geometry.__dirtyNormals = true;
-    
-    /*var player = new Player();
-    if(_playerSide == 'right') {
-      player.createPlayer(100);
-    }else if(_playerSide == 'left') {
-      player.createPlayer(-100);
-    }*/
-    
+ 
     return playerMeshUp ;
 }
 
 
 function jumpPlayer( playerType ) {
   currentJumpingPlayerType  = playerType;
-  // remove previous tweens if needed
-  //TWEEN.removeAll();
-  //alert("lets go");
   var position = { y: 0 };
   var target = { y: jumpingHeight };
   var target_back = { y: 0 };
@@ -196,7 +196,6 @@ function jumpPlayer( playerType ) {
     Players[playerType].model.position.y = position.y;
   }; 
   
-  //var tween = new TWEEN.Tween(position).to(target, 2000);  
  
  var easingUp	= TWEEN.Easing.Quartic.EaseOut;
  var easingDown = TWEEN.Easing.Bounce.EaseOut;
@@ -310,8 +309,6 @@ function movePlayers( destinationQuotient ) {
     Players['left'].model.position.x = position.playerLeftX;
     Players['right'].model.position.x = position.playerRightX;
   }; 
-  
-  //var tween = new TWEEN.Tween(position).to(target, 2000);  
  
  var easing	= TWEEN.Easing.Quartic.EaseOut;
 
@@ -332,11 +329,9 @@ function beginKickPlayer( playerType ) {
   }else if( playerType == 'left') {
     movePlayers(-0.05);
   }
-  //do a short delay an begin kick off
-  renderKick(playerType);
-  
-  
-  
+
+  return renderKick(playerType);
+ 
 }
 
 function renderKick( playerType ) {
@@ -353,8 +348,6 @@ function renderKick( playerType ) {
     Players[playerType].model.position.y = position.playerY;
     if( (curRotation % 180) == 0 ) { curRotation = 0; }
   }; 
-  
-  //var tween = new TWEEN.Tween(position).to(target, 2000);  
  
  var easing	= TWEEN.Easing.Quartic.EaseOut;
 
