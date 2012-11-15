@@ -354,6 +354,11 @@ socket.on('Choose Answer', function (msg) {
     });
 });
 
+function flashMessage(text) {
+    $("#flash").text(text).show();
+    setTimeout(function() {$("#flash").fadeOut();}, 500);
+}
+
 socket.on('Turn Result', function (msg) {
     var decoded = dec(msg);
     var fight = decoded.fight;
@@ -362,6 +367,8 @@ socket.on('Turn Result', function (msg) {
     if (fight.attacker == nick) {
         hideOptions(opponent(fight, nick), fight.answer);
     }
+
+    flashMessage(defended ? "Pariert!" : "AUTSCH!!!")
 });
 
 socket.on('Fight Result', function (msg) {
