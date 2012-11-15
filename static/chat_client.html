@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Piratenkampf TEST CLIENT</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <style>
+        #messages {
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+<div data-role="page">
+
+    <div data-role="header">
+        <h1>Piratenkampf!</h1>
+    </div><!-- /header -->
+
+    <div data-role="content">
+
+        <section id="sectLogin"><form>
+            <label for="nick">Login</label><input type="text" id="nick" />
+            <button id="login">Einloggen!</button>
+        </form></section>
+
+        <section id="sectMain" style="display: none;" class="ui-grid-a">
+            <form class="ui-block-a">
+                <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
+                <label for="text">Message</label><input type="text" id="text"/>
+                <button id="send">SEND</button>
+            </form>
+            <div class="ui-block-b">
+                <ul id="users" data-role="listview" ></ul>
+            </div>
+        </section>
+    </div><!-- /content -->
+
+</div><!-- /page -->
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var nick;
+    var socket = io.connect('http://' + location.host + '/chat');
+
+    /* GENERAL */
+    function enc(object) { return JSON.stringify(object); }
+    function dec(str) { return JSON.parse(str); }
+
+    function doLog(level, title, msg) {
+        console.log(title + ": " + enc(msg));
+    }
+
+    function log(title, msg) {
+        doLog("DEBUG", title, msg);
+    }
+
+    function err(title, msg) {
+        doLog("ERROR", title, msg);
+    }
+
+    function show(text, user) {
+        if (user != null) text = user + ": " + text;
+        // doLog("DEBUG", "Write", text);
+        var $out = $("#messages");
+        $out.val($out.val() + text + "\n");
+        $out.scrollTop($out[0].scrollHeight);
+    }
+
+    socket.on('Log', function (msg) {
+        log("[SERVER] " + dec(msg).title, enc(dec(msg).payload));
+    });
+
+
+    // LOGIN/LOGOUT /////////////////////////////////////////////////////////////////
+    $("#login").click(function(e) {
+        var nick = $("#nick").val();
+        socket.emit('login', enc({"nick": nick}));
+        e.preventDefault();
+    });
+
+    // msg: {reason: "why nick not allowed"}
+    socket.on('Nick Not Allowed', function (msg) {
+        alert("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
+    });
+
+    // msg: {nick: "the user who joined"}
+    socket.on('User Joined', function (msg) {
+        var nick = dec(msg).nick;
+        show(nick + " joined.");
+        $("#users").append($("<li>" + nick + "</li>"));
+    });
+
+    // msg: {nick: "user who left"}
+    socket.on('User Left', function (msg) {
+        var nick = dec(msg).nick;
+        show(nick + " left.");
+        var $u = $("#users").find("li");
+        $u.each(function (i, el) {
+            if (el.firstChild.data == nick) {
+                el.parentNode.removeChild(el)
+            }
+        });
+    });
+
+    // msg: {users: ["nick1", "nick2", "nick3"]}
+    socket.on('Users', function (msg) {
+        var list = dec(msg).users;
+        for (var i = 0; i < list.length; ++i) {
+           $("#users").append($("<li>" + list[i] + "</li>"));
+        }
+    });
+
+    // msg: {nick: "user who left"}
+    socket.on('Login', function (msg) {
+        nick = dec(msg).nick;
+        show("Welcome, " + nick + "!");
+        $("#sectLogin").hide();
+        $("#sectMain").show();
+    });
+
+    // CHAT ////////////////////////////////////////////////////////////////////////
+
+    // msg: {from: "the sender", text: "a message"}
+    socket.on('Message', function (msg) {
+        show(dec(msg).text, dec(msg).from);
+    });
+
+    // msg: {from: "the sender", text: "a message"}
+    socket.on('Private Message', function (msg) {
+        show(dec(msg).text, dec(msg).from + " (private)");
+    });
+
+    $("#send").click(function(e) {
+        var text = $("#text").val();
+        var to = null;
+
+        // Challenge:
+        if (text.indexOf("/challenge ") == 0) {
+            var parts = text.split(" ", 2);
+            to = parts[1];
+            if (to != null) {
+                show("You challenged " + to);
+                socket.emit('challenge', enc({to: to}));
+            }
+        }
+        // Private Message:
+        else if (text.indexOf("/pm ") == 0) {
+            var parts = text.split(" ", 3);
+            to = parts[1];
+            text = parts[2];
+
+            if (to != null) {
+                show(text, "Private to " + to);
+                socket.emit('whisper', enc({text: text, to: to}));
+            }
+        }
+        else {
+            show(text, "You");
+            socket.emit('say', enc({text: text}));
+        }
+        e.preventDefault();
+    });
+
+
+    // FIGHT ////////////////////////////////////////////////////////////////////////
+
+    // receive a challgenge: {to: nick}
+    socket.on('Incoming Challenge', function (msg) {
+        if(confirm(dec(msg).from + " has challenged you. Accept?")) {
+            socket.emit('challenge accepted', "");
+        }
+        else {
+            socket.emit('challenge declined', "");
+        }
+    });
+
+    socket.on('Fight Started', function (msg) {
+        var fight = dec(msg);
+        show("Fight started between " + fight.challenger + " and " + fight.defendant);
+    });
+
+    socket.on('Challenge Declined', function (msg) {
+        show("Challenge declined: " + dec(msg).reason);
+    });
+
+    socket.on('Choose Attack', function (msg) {
+        // console.log('Choose Attack received (%o)', msg);
+        var fight = dec(msg);
+        var options = fight.attackOptions;
+        var message = "Choose an attack! \n";
+        for (var i = 0; i < options.length; ++i) {
+            message += "(" + i + ") " + options[i] + "\n";
+        }
+        var number = prompt(message, 0);
+        socket.emit('attack', enc({option: number}));
+    });
+
+    socket.on('Choose Answer', function (msg) {
+        // console.log('Choose Answer received (%o)', msg);
+        var decoded = dec(msg);
+        var options = decoded.options;
+
+        var message = '"' + decoded.attack + '"\n\nChoose your answer wisely! \n';
+        for (var i = 0; i < decoded.options.length; ++i) {
+            message += "(" + i + ") " + decoded.options[i] + "\n";
+        }
+        var number = prompt(message, 0);
+        socket.emit('respond', enc({option: number}));
+    });
+
+    socket.on('Turn Result', function (msg) {
+        var decoded = dec(msg);
+        var fight = decoded.fight;
+        var attacker = fight.attacker;
+        var defender = opponent(fight, fight.attacker);
+        if (decoded.defended) {
+            show(defender + " defended against '" + fight.attack + "' using '" + fight.answer + '"');
+        }
+        else {
+            show(defender + " failed defending against '" + fight.attack + "' using '" + fight.answer + '"');
+        }
+        show("Score: " + attacker + ": " + fight.hitpoints[attacker] + ", " +
+                         defender + ": " + fight.hitpoints[defender]);
+    });
+
+    socket.on('Fight Result', function (msg) {
+        var fight = dec(msg);
+        if (fight.hitpoints[nick] == 0) {
+            show("\nYou lost!");
+        }
+        else {
+            show("\nYou won!");
+        }
+    });
+
+    socket.on('Fight Ended', function (msg) {
+        var decoded = dec(msg);
+        var fight = decoded.fight;
+        show("Fight between " + fight.challenger + " and " + fight.defendant + " ended " +
+             fight.hitpoints[fight.challenger] + ":" + fight.hitpoints[fight.defendant]);
+        show("Winner " + decoded.winner + " has new score " + decoded.winnerWins);
+    });
+
+    function opponent(fight, nick) {
+        return (fight.challenger == nick) ? fight.defendant : fight.challenger;
+    }
+
+</script>
+
+
+</body>
+</html>
