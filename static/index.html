@@ -5,9 +5,64 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
     <style>
+        body, html {
+            margin: 0;
+            overflow: hidden;
+        }
+
         #messages {
             height: 200px;
+        }
+
+        #arena {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            font-family: 'VT323', cursive;
+            font-size: 2em;
+        }
+
+        #challenge {
+            min-height: 8%;
+            background: black;
+            color: white;
+            margin: 0;
+            padding: 10px;
+            font-size: 1.3em;
+            text-shadow: -1px 0 black, 0 1px black,
+                          1px 0 black, 0 -1px black;
+        }
+        #challenge .opponent {
+            color: #bc8f8f;
+        }
+        #picture {
+            height: 60%;
+            top: 10%;
+            background: url('img/arena_bg.gif');
+            background-position: 20%;
+            background-size: 100%;
+            margin: 0;
+        }
+        #options {
+            position: absolute;
+            bottom: 0;
+            min-height: 30%;
+            width: 100%;
+            margin: 0;
+            color: #d0d0d0;
+            background: black;
+            font-size: 1.4em;
+        }
+
+        #options li {
+            margin: 15px;
+        }
+
+        #options li:hover,
+        #options li:active {
+            color: #ffeeee;
         }
     </style>
 </head>
@@ -16,19 +71,32 @@
 
 
 <div data-role="page">
+    <div id="arena" data-role="content">
+    <div id="challenge">
+        <span class="opponent">DIETER</span>
+        <span class="message">Mein Schwert wird dich aufspießen wie einen Schaschlik!</span>
+    </div>
+    <div id="picture"></div>
+    <ul id="options">
+        <li id="o1">Dann mach nicht damit rum wie mit einem Staubwedel!</li>
+        <li id="o2">Aha, mal wieder in der Nase gebohrt, wie?</li>
+        <li id="o3">Vielleicht solltest du es endlich mal benutzen?</li>
+    </ul>
+    </div>
 
-    <div data-role="header">
+
+    <div data-role="header" style="display: none;">
         <h1>Piratenkampf!</h1>
     </div><!-- /header -->
 
-    <div data-role="content">
+    <div id="lobby" data-role="content" style="display: none;">
 
-        <section id="sectLogin"><form>
+        <section id="sectLogin" style="display: none;"><form>
             <label for="nick">Login</label><input type="text" id="nick" />
             <button id="login">Einloggen!</button>
         </form></section>
 
-        <section id="sectMain" style="display: none;" class="ui-grid-a">
+        <section id="sectMain" style="display: none;">
             <form class="ui-block-a">
                 <textarea id="messages" rows="10" cols="40" autocomplete="off" readonly></textarea></br>
                 <label for="text">Message</label><input type="text" id="text"/>
@@ -38,179 +106,228 @@
                 <ul id="users" data-role="listview" ></ul>
             </div>
         </section>
-    </div><!-- /content -->
+
+    </div><!-- /content  1 -->
 
 </div><!-- /page -->
 
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    var challengeOpen = false;
-    var socket = io.connect('http://' + location.host + '/chat');
+var nick;
+var socket = io.connect('http://' + location.host + '/chat');
 
-    /* GENERAL */
-    function enc(object) { return JSON.stringify(object); }
-    function dec(str) { return JSON.parse(str); }
+// General helpers: /////////////////////////////////////////////////////////////////////
+function enc(object) { return JSON.stringify(object); }
+function dec(str) { return JSON.parse(str); }
 
-    function doLog(level, title, msg) {
-        console.log(title + ": " + enc(msg));
+function doLog(level, title, msg) {
+    console.log(title + ": " + enc(msg));
+}
+
+function log(title, msg) {
+    doLog("DEBUG", title, msg);
+}
+
+function err(title, msg) {
+    doLog("ERROR", title, msg);
+}
+
+function show(text, user) {
+    if (user != null) text = user + ": " + text;
+    // doLog("DEBUG", "Write", text);
+    var $out = $("#messages");
+    $out.val($out.val() + text + "\n");
+    $out.scrollTop($out[0].scrollHeight);
+}
+
+socket.on('Log', function (msg) {
+    log("[SERVER] " + dec(msg).title, enc(dec(msg).payload));
+});
+
+
+// LOGIN/LOGOUT /////////////////////////////////////////////////////////////////////////
+$("#login").click(function(e) {
+    var nick = $("#nick").val();
+    socket.emit('login', enc({"nick": nick}));
+    e.preventDefault();
+});
+
+// msg: {reason: "why nick not allowed"}
+socket.on('Nick Not Allowed', function (msg) {
+    alert("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
+});
+
+// msg: {nick: "the user who joined"}
+socket.on('User Joined', function (msg) {
+    var nick = dec(msg).nick;
+    show(nick + " joined.");
+    $("#users").append($("<li>" + nick + "</li>"));
+});
+
+// msg: {nick: "user who left"}
+socket.on('User Left', function (msg) {
+    var nick = dec(msg).nick;
+    show(nick + " left.");
+    var $u = $("#users").find("li");
+    $u.each(function (i, el) {
+        if (el.firstChild.data == nick) {
+            el.parentNode.removeChild(el)
+        }
+    });
+});
+
+// msg: {users: ["nick1", "nick2", "nick3"]}
+socket.on('Users', function (msg) {
+    var list = dec(msg).users;
+    for (var i = 0; i < list.length; ++i) {
+        $("#users").append($("<li>" + list[i] + "</li>"));
     }
+});
 
-    function log(title, msg) {
-        doLog("DEBUG", title, msg);
+// msg: {nick: "user who left"}
+socket.on('Login', function (msg) {
+    nick = dec(msg).nick;
+    show("Welcome, " + nick + "!");
+    $("#sectLogin").hide();
+    $("#sectMain").show();
+});
+
+
+// CHAT /////////////////////////////////////////////////////////////////////////////////
+
+// msg: {from: "the sender", text: "a message"}
+socket.on('Message', function (msg) {
+    show(dec(msg).text, dec(msg).from);
+});
+
+// msg: {from: "the sender", text: "a message"}
+socket.on('Private Message', function (msg) {
+    show(dec(msg).text, dec(msg).from + " (private)");
+});
+
+$("#send").click(function(e) {
+    var text = $("#text").val();
+    var to = null;
+
+    // Challenge:
+    if (text.indexOf("/challenge ") == 0) {
+        var parts = text.split(" ", 2);
+        to = parts[1];
+        if (to != null) {
+            show("You challenged " + to);
+            socket.emit('challenge', enc({to: to}));
+        }
     }
+    // Private Message:
+    else if (text.indexOf("/pm ") == 0) {
+        var parts = text.split(" ", 3);
+        to = parts[1];
+        text = parts[2];
 
-    function err(title, msg) {
-        doLog("ERROR", title, msg);
+        if (to != null) {
+            show(text, "Private to " + to);
+            socket.emit('whisper', enc({text: text, to: to}));
+        }
     }
-
-    function show(text, user) {
-        if (user != null) text = user + ": " + text;
-        // doLog("DEBUG", "Write", text);
-        var $out = $("#messages");
-        $out.val($out.val() + text + "\n");
-        $out.scrollTop($out[0].scrollHeight);
+    else {
+        show(text, "You");
+        socket.emit('say', enc({text: text}));
     }
-
-    socket.on('Log', function (msg) {
-        log("[SERVER] " + dec(msg).title, enc(dec(msg).payload));
-    });
+    e.preventDefault();
+});
 
 
-    // LOGIN/LOGOUT /////////////////////////////////////////////////////////////////
-    $("#login").click(function(e) {
-        var nick = $("#nick").val();
-        socket.emit('login', enc({"nick": nick}));
-        e.preventDefault();
-    });
+// FIGHT ////////////////////////////////////////////////////////////////////////
 
-    // msg: {reason: "why nick not allowed"}
-    socket.on('Nick Not Allowed', function (msg) {
-        alert("Nick '" + dec(msg).nick + "' not ok! Reason: " + dec(msg).reason);
-    });
+// receive a challgenge: {to: nick}
+socket.on('Incoming Challenge', function (msg) {
+    if(confirm(dec(msg).from + " has challenged you. Accept?")) {
+        socket.emit('challenge accepted', "");
+    }
+    else {
+        socket.emit('challenge declined', "");
+    }
+});
 
-    // msg: {nick: "the user who joined"}
-    socket.on('User Joined', function (msg) {
-        var nick = dec(msg).nick;
-        show(nick + " joined.");
-        $("#users").append($("<li>" + nick + "</li>"));
-    });
+socket.on('Challenge Declined', function (msg) {
+    show("Challenge declined: " + dec(msg).reason);
+});
 
-    // msg: {nick: "user who left"}
-    socket.on('User Left', function (msg) {
-        var nick = dec(msg).nick;
-        show(nick + " left.");
-        var $u = $("#users").find("li");
-        $u.each(function (i, el) {
-            if (el.firstChild.data == nick) {
-                el.parentNode.removeChild(el)
-            }
-        });
-    });
+socket.on('Init Fight', function (msg) {
+    var fight = dec(msg).fight;
+    $("#arena").show();
+});
 
-    // msg: {users: ["nick1", "nick2", "nick3"]}
-    socket.on('Users', function (msg) {
-        var list = dec(msg).users;
-        for (var i = 0; i < list.length; ++i) {
-           $("#users").append($("<li>" + list[i] + "</li>"));
-        }
-    });
+socket.on('Choose Attack', function (msg) {
+    // console.log('Choose Attack received (%o)', msg);
+    var fight = dec(msg);
+    var options = fight.attackOptions;
+    var message = "Choose an attack! \n";
+    for (var i = 0; i < options.length; ++i) {
+        message += "(" + i + ") " + options[i] + "\n";
+    }
+    var number = prompt(message, 0);
+    socket.emit('attack', enc({option: number}));
+});
 
-    // msg: {nick: "user who left"}
-    socket.on('Login', function (msg) {
-        var nick = dec(msg).nick;
-        show("Welcome, " + nick + "!");
-        $("#sectLogin").hide();
-        $("#sectMain").show();
-    });
+socket.on('Choose Answer', function (msg) {
+    // console.log('Choose Answer received (%o)', msg);
+    var decoded = dec(msg);
+    var options = decoded.options;
 
-    // CHAT ////////////////////////////////////////////////////////////////////////
+    var message = '"' + decoded.attack + '"\n\nChoose your answer wisely! \n';
+    for (var i = 0; i < decoded.options.length; ++i) {
+        message += "(" + i + ") " + decoded.options[i] + "\n";
+    }
+    var number = prompt(message, 0);
+    socket.emit('respond', enc({option: number}));
+});
 
-    // msg: {from: "the sender", text: "a message"}
-    socket.on('Message', function (msg) {
-        show(dec(msg).text, dec(msg).from);
-    });
+socket.on('Turn Result', function (msg) {
+    var decoded = dec(msg);
+    var fight = decoded.fight;
+    var attacker = fight.attacker;
+    var defender = opponent(fight, fight.attacker);
+    if (decoded.defended) {
+        show(defender + " defended against '" + fight.attack + "' using '" + fight.answer + '"');
+    }
+    else {
+        show(defender + " failed defending against '" + fight.attack + "' using '" + fight.answer + '"');
+    }
+    show("Score: " + attacker + ": " + fight.hitpoints[attacker] + ", " +
+            defender + ": " + fight.hitpoints[defender]);
+});
 
-    // msg: {from: "the sender", text: "a message"}
-    socket.on('Private Message', function (msg) {
-        show(dec(msg).text, dec(msg).from + " (private)");
-    });
-
-    $("#send").click(function(e) {
-        var text = $("#text").val();
-        var to = null;
-
-        // Challenge:
-        if (text.indexOf("/challenge ") == 0) {
-            var parts = text.split(" ", 2);
-            to = parts[1];
-
-            if (to != null) {
-                show("You challenged ", to);
-                socket.emit('challenge', enc({to: to}));
-            }
-        }
-        // Private Message:
-        else if (text.indexOf("/pm ") == 0) {
-            var parts = text.split(" ", 3);
-            to = parts[1];
-            text = parts[2];
-
-            if (to != null) {
-                show(text, "Private to " + to);
-                socket.emit('whisper', enc({text: text, to: to}));
-            }
-        }
-        else {
-            show(text, "You");
-            socket.emit('say', enc({text: text}));
-        }
-        e.preventDefault();
-    });
+socket.on('Fight Result', function (msg) {
+    var fight = dec(msg);
+    if (fight.hitpoints[nick] == 0) {
+        show("\nYou lost!");
+    }
+    else {
+        show("\nYou won!");
+    }
+});
 
 
-    // FIGHT ////////////////////////////////////////////////////////////////////////
+// FIGHT Broadcast events ///////////////////////////////////////////////////////////////
 
-    // receive a challgenge: {to: nick}
-    socket.on('Incoming Challenge', function (msg) {
-        if(confirm(dec(msg).from + " has challenged you. Accept?")) {
-            socket.emit('challenge accepted', "");
-        }
-        else {
-            socket.emit('challenge declined', "");
-        }
-    });
+socket.on('Fight Started', function (msg) {
+    var fight = dec(msg);
+    show("Fight started between " + fight.challenger + " and " + fight.defendant);
+});
 
-    socket.on('Fight Started', function (msg) {
-        var fight = dec(msg);
-        show("Fight started between " + fight.challenger + " and " + fight.defendant);
-    });
+socket.on('Fight Ended', function (msg) {
+    var decoded = dec(msg);
+    var fight = decoded.fight;
+    show("Fight between " + fight.challenger + " and " + fight.defendant + " ended " +
+            fight.hitpoints[fight.challenger] + ":" + fight.hitpoints[fight.defendant]);
+    show("Winner " + decoded.winner + " has new score " + decoded.winnerWins);
+});
 
-
-    socket.on('Choose Attack', function (msg) {
-        console.log('Choose Attack received (%o)', msg);
-        var fight = dec(msg);
-        var options = fight.attackOptions;
-        var message = "Choose an attack! \n";
-        for (var i = 0; i < options.length; ++i) {
-            message += "(" + i + ") " + options[i] + "\n";
-        }
-        var number = prompt(message, 0);
-        socket.emit('attack', enc({option: number}));
-    });
-
-    socket.on('Choose Answer', function (msg) {
-        console.log('Choose Answer received (%o)', msg);
-        var decoded = dec(msg);
-        var options = decoded.options;
-        var message = "Choose an answer! \n";
-        for (var i = 0; i < decoded.options.length; ++i) {
-            message += "(" + i + ") " + decoded.options[i] + "\n";
-        }
-        var number = prompt(message, 0);
-        socket.emit('respond', enc({option: number}));
-    });
-
+function opponent(fight, nick) {
+    return (fight.challenger == nick) ? fight.defendant : fight.challenger;
+}
 
 </script>
 

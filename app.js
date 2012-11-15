@@ -185,6 +185,8 @@ io.of("/chat").on('connection', function (client) {
 
     client.on('challenge accepted', function () {
         var fight = fightByNick[nick];
+        client.emit('Init Fight', enc(fight));
+        clientsByNick[opponent(nick)].emit('Init Fight', enc(fight));
         client.broadcast.emit('Fight Started', enc(fight));
         startAttack(fight);
     });
