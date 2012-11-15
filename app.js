@@ -24,7 +24,7 @@ io.configure(function(){
 function enc(object) { return JSON.stringify(object) }
 function dec(str)  { return JSON.parse(str) }
 
-var START_HITPOINTS = 2;
+var START_HITPOINTS = 3;
 
 
 // FIGHT MANAGEMENT
@@ -202,7 +202,9 @@ io.of("/chat").on('connection', function (client) {
         fight.attack = attack;
         fight.answerOptions = pickAnswerOptions(attack);
         var opp = opponent(nick);
-        clientsByNick[opp].emit('Choose Answer', enc({attack: attack, options: fight.answerOptions}));
+
+        //{attack: attack, options: fight.answerOptions}
+        clientsByNick[opp].emit('Choose Answer', enc(fight));
     });
 
     client.on('respond', function (msg) {
@@ -260,7 +262,6 @@ io.of("/chat").on('connection', function (client) {
             answers.push(challenges.answers[attacks[i]][0]);
         }
 
-        console.log("Answer options for attack '" + attack + "':" + answers);
         return answers;
     }
 
