@@ -105,6 +105,24 @@ function init_scene() {
     rendererTable.render( sceneTable, camera );
     this.playerLeft.render.render( this.playerLeft.scene, camera );
     this.playerRight.render.render( this.playerRight.scene, camera );
+    
+//     var textureImg_left = new Image();
+//     textureImg_left.onload = function(){	
+//       rendererTable.render( sceneTable, camera );
+//       playerLeft.render.render( playerLeft.scene, camera );
+// 
+//     };
+//     
+//     var textureImg_right = new Image();
+//     textureImg_right.onload = function(){	
+//       rendererTable.render( sceneTable, camera );
+//       playerRight.render.render( playerRight.scene, camera );
+//     };
+//     
+//     textureImg_right.src = "_img/RightWin.png";
+//     textureImg_left.src = "_img/LeftWin.png";
+
+
 
 }
 
@@ -170,11 +188,9 @@ function createPlayerModel( _palyerID, _playerSide ) {
 	map:THREE.ImageUtils.loadTexture(imgSource)
     });
     img.map.needsUpdate = true; //ADDED
-    img.needsUpdate = true;
     
     playerModel = new THREE.PlaneGeometry(2*playerHeight, 2*playerHeight);
     var playerMeshUp = new THREE.Mesh( playerModel , img );
-    playerMeshUp.needsUpdate = true;
     
     if( _playerSide == 'left') {
       playerMeshUp.position.x = -(playerDistance);
