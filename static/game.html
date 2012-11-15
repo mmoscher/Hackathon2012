@@ -68,6 +68,8 @@ function show(text, user) {
 }
 
 function userNameClick(e){
+    if (users[$(e.target).data("name")].fights)
+        return;
     dialog(e.target, $(e.target).data("name"),
             "Was willst du tun?",
             [{
@@ -169,7 +171,7 @@ socket.on('User Joined', function (msg) {
     var nick = dec(msg).nick;
     users[nick] = new User(nick);
 
-    $("#users").append($("<li id='user-"+nick.replace(/ /g,"_")+"' data-name='"+nick+"''>" + nick + "</li>").touchClick(userNameClick).click(userNameClick));
+    $("#users").append($("<li id='user-"+nick.replace(/ /g,"_")+"' data-name='"+nick+"'>" + nick + "</li>").touchClick(userNameClick).click(userNameClick));
 });
 
 socket.on('User Left', function (msg) {
@@ -179,26 +181,30 @@ socket.on('User Left', function (msg) {
 });
 
 socket.on('Fight Started', function(msg){
-    var fighter = dec(msg).fight;
+    var fighter = dec(msg);
     if(typeof users[fighter.challenger] != 'undefined'){
-        users[fighter.challenger].startFight;
+        users[fighter.challenger].startFight();
         $("#user-" + fighter.challenger.replace(/ /g,"_")).addClass("inFight");
     }
     if(typeof users[fighter.defendant] != 'undefined'){
-        users[fighter.defendant].startFight;
+        users[fighter.defendant].startFight();
         $("#user-" + fighter.defendant.replace(/ /g,"_")).addClass("inFight");
     }
 });
-socket.on('Fight Finished', function(msg){
-    var fighter = dec(msg).fight;
+socket.on('Fight Ended', function(msg){
+    var fighter = dec(msg);
     if(typeof users[fighter.challenger] != 'undefined'){
-        users[fighter.challenger].finishedFight;
+        users[fighter.challenger].finishedFight();
         $("#user-" + fighter.challenger).removeClass("inFight");
     }
     if(typeof users[fighter.defendant] != 'undefined'){
-        users[fighter.defendant].finishedFight;
+        users[fighter.defendant].finishedFight();
         $("#user-" + fighter.defendant).removeClass("inFight");
     }
+
+    var loser = (fighter.winner == fighter.challenger) ? fighter.defendant : fighter.challenger;
+    show(fighter.winner + " hat " + loser + " über die Planke geschickt!");
+    show(fighter.winner + " hat jetzt" + fighter.winnerWins + " Punkte");
 });
 
 socket.on('Users', function (msg) {
@@ -206,12 +212,17 @@ socket.on('Users', function (msg) {
     var fighters = dec(msg).fighters;
     for (var i = 0; i < list.length; ++i) {
         users[list[i]] = new User(list[i]);
-        if ($.inArray(list[i], fighters)) users[list[i]].startFight();
+        if (fighters.indexOf(list[i] != -1)){
+            users[list[i]].startFight();
+        }
     };
+    $("#users").html("");
     $.each(users, function(key, val){
-        $("#users").append(
-                $("<li id='user-"+val.name.replace(/ /g,"_")+"' data-name='"+val.name+"'>" + val.name + "</li>").touchClick(userNameClick).click(userNameClick)
-        );
+        var li =$("<li id='user-"+val.name.replace(/ /g,"_")+"' data-name='"+val.name+"'>" + val.name + "</li>").touchClick(userNameClick).click(userNameClick)
+        $("#users").append(li);
+        if(val.fights){
+            li.addClass("inFight");
+        }
     });
 });
 
@@ -267,6 +278,7 @@ function openArena() {
 }
 
 function closeArena() {
+    socket.emit('get users');
     $("#lobby").show();
     $("#header").show();
     $("#arena").hide();
@@ -382,13 +394,6 @@ socket.on('Fight Started', function (msg) {
     show("Fight started between " + fight.challenger + " and " + fight.defendant);
 });
 
-socket.on('Fight Ended', function (msg) {
-    var decoded = dec(msg);
-    var fight = decoded.fight;
-    show("Fight between " + fight.challenger + " and " + fight.defendant + " ended " +
-            fight.hitpoints[fight.challenger] + ":" + fight.hitpoints[fight.defendant]);
-    show("Winner " + decoded.winner + " has new score " + decoded.winnerWins);
-})  ;
 
 function opponent(fight, nick) {
     return (fight.challenger == nick) ? fight.defendant : fight.challenger;
