@@ -242,7 +242,7 @@ label {
   margin: 10px 10px 0px 10px;
 }
 #aside li.inFight {
-  background: url('http://localhost:9001/stylesheets/../images/notActive.gif');
+  background: url('../images/notActive.gif');
 }
 #aside li:hover {
   background: #ffffff;
@@ -334,7 +334,7 @@ label {
 #picture {
   height: 60%;
   top: 10%;
-  background: url('http://localhost:9001/stylesheets/../images/arena_bg.jpg');
+  background: url('../images/arena_bg.jpg');
   background-position: 20%;
   background-size: 100%;
   margin: 0;
